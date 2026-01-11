@@ -5,17 +5,17 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from models.schemas import (
+from priority_scoring.models.schemas import (
     Email, PriorityScore, ScoreBreakdown, ScoreComponent,
     PriorityScoreBatchResponse
 )
-from config import get_priority_level
-from .gemini_client import GeminiClient
-from .authority import AuthorityService
-from .deadline import DeadlineService
-from .tone import ToneService
-from .history import HistoryService
-from .calendar import CalendarService
+from shared.config import get_priority_level
+from shared.gemini_client import GeminiClient
+from priority_scoring.services.authority import AuthorityService
+from priority_scoring.services.deadline import DeadlineService
+from priority_scoring.services.tone import ToneService
+from priority_scoring.services.history import HistoryService
+from priority_scoring.services.calendar import CalendarService
 
 
 class PriorityScorerService:

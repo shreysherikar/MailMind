@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 import uuid
 
-from models.schemas import Contact, ContactCreate, ContactUpdate, AuthorityType
-from models.database import get_db, ContactDB
+from priority_scoring.models.schemas import Contact, ContactCreate, ContactUpdate, AuthorityType
+from shared.database import get_db, ContactDB
 
 router = APIRouter(prefix="/api/v1/contacts", tags=["Contacts"])
 
