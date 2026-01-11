@@ -1,9 +1,9 @@
-"""Pydantic schemas for request/response validation."""
+"""Pydantic schemas for Priority Scoring feature."""
 
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 import uuid
 
 
@@ -85,85 +85,6 @@ class PriorityScoreBatchResponse(BaseModel):
     scores: List[PriorityScore]
     total_emails: int
     avg_score: float
-
-
-# ============== Task Models ==============
-
-class TaskStatus(str, Enum):
-    """Task status options."""
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    ARCHIVED = "archived"
-
-
-class SourceEmail(BaseModel):
-    """Reference to source email for a task."""
-    id: str
-    subject: str
-    sender: str
-
-
-class Task(BaseModel):
-    """Task extracted from an email."""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str = Field(..., description="Task title/summary")
-    description: Optional[str] = Field(None, description="Detailed task description")
-    due_date: Optional[datetime] = Field(None, description="Task due date")
-    due_date_type: Optional[str] = Field(None, description="explicit, relative, or inferred")
-    priority: str = Field(default="medium", description="Priority level")
-    priority_score: int = Field(default=50, ge=0, le=100)
-    status: TaskStatus = Field(default=TaskStatus.PENDING)
-    source_email: SourceEmail
-    original_text: str = Field(..., description="Original text that triggered task extraction")
-    confidence: float = Field(default=0.8, ge=0.0, le=1.0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class TaskCreate(BaseModel):
-    """Model for creating a task manually."""
-    title: str
-    description: Optional[str] = None
-    due_date: Optional[datetime] = None
-    priority: str = "medium"
-    source_email_id: Optional[str] = None
-
-
-class TaskUpdate(BaseModel):
-    """Model for updating a task."""
-    title: Optional[str] = None
-    description: Optional[str] = None
-    due_date: Optional[datetime] = None
-    priority: Optional[str] = None
-    status: Optional[TaskStatus] = None
-
-
-class TaskExtractRequest(BaseModel):
-    """Request model for task extraction."""
-    email: Email
-    email_priority_score: Optional[int] = Field(None, description="Pre-calculated priority score")
-
-
-class TaskExtractResponse(BaseModel):
-    """Response model for task extraction."""
-    tasks: List[Task]
-    task_count: int
-    source_email_id: str
-
-
-class TaskCompleteResponse(BaseModel):
-    """Response when completing a task."""
-    task: Task
-    archive_source_email: bool = Field(
-        default=False,
-        description="Whether to archive the source email (all tasks completed)"
-    )
-    source_email_id: str
-    all_tasks_from_email_completed: bool
 
 
 # ============== Contact Models ==============
