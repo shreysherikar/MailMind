@@ -1,0 +1,82 @@
+[
+  {
+    "id": "email_001",
+    "sender_email": "ceo@company.com",
+    "sender_name": "John Smith, CEO",
+    "subject": "URGENT: Q4 Budget Review Required by Tomorrow",
+    "body": "Hi,\n\nI need you to review the Q4 budget proposal ASAP. The board meeting is tomorrow at 10 AM and we need your sign-off before then.\n\nPlease review the attached document and send me your feedback by end of day today.\n\nThis is critical for our quarterly planning.\n\nThanks,\nJohn Smith\nCEO, Company Inc.",
+    "timestamp": "2024-01-15T09:00:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": true
+  },
+  {
+    "id": "email_002",
+    "sender_email": "client@bigcorp.com",
+    "sender_name": "Sarah Johnson",
+    "subject": "Project Milestone - Need Update",
+    "body": "Hello,\n\nCould you please send me an update on the project status? We have a stakeholder meeting next week and I'd like to present the current progress.\n\nAlso, can you schedule a call for Thursday to discuss the next phase?\n\nBest regards,\nSarah Johnson\nProject Manager, BigCorp",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_003",
+    "sender_email": "newsletter@marketing.com",
+    "sender_name": "Marketing Weekly",
+    "subject": "This Week's Top Marketing Tips",
+    "body": "Hi there!\n\nHere are this week's top marketing tips:\n\n1. Optimize your email subject lines\n2. Use A/B testing for campaigns\n3. Focus on customer retention\n\nClick here to read more!\n\nUnsubscribe | Privacy Policy",
+    "timestamp": "2024-01-15T06:00:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_004",
+    "sender_email": "manager@company.com",
+    "sender_name": "Emily Chen, Engineering Manager",
+    "subject": "1:1 Meeting Tomorrow - Please Prepare",
+    "body": "Hi,\n\nJust a reminder about our 1:1 meeting tomorrow at 2 PM.\n\nPlease prepare:\n- Your progress update on the current sprint\n- Any blockers you're facing\n- Topics you'd like to discuss\n\nAlso, please review the team's performance metrics before we meet.\n\nSee you tomorrow!\nEmily",
+    "timestamp": "2024-01-15T14:00:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_005",
+    "sender_email": "recruiter@techtalent.com",
+    "sender_name": "Mike Brown",
+    "subject": "Exciting Opportunity at Top Tech Company",
+    "body": "Hi,\n\nI came across your profile and thought you'd be a great fit for a Senior Engineer position at a leading tech company.\n\nThe role offers:\n- Competitive salary ($200k+)\n- Remote work options\n- Great benefits\n\nWould you be interested in a quick call to discuss?\n\nBest,\nMike Brown\nTech Talent Recruiting",
+    "timestamp": "2024-01-15T11:00:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_006",
+    "sender_email": "frustrated.customer@gmail.com",
+    "sender_name": "Angry Customer",
+    "subject": "COMPLAINT: Unacceptable Service!",
+    "body": "I am extremely disappointed with the service I received!\n\nI have been waiting for 3 weeks for a response to my support ticket and NOTHING has been done. This is absolutely unacceptable!\n\nI demand an immediate resolution or I will be forced to escalate this matter further and leave negative reviews everywhere.\n\nThis needs to be fixed TODAY!\n\nVery frustrated,\nAngry Customer",
+    "timestamp": "2024-01-15T08:30:00Z",
+    "recipients": ["support@company.com", "you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_007",
+    "sender_email": "colleague@company.com",
+    "sender_name": "Alex Park",
+    "subject": "Quick question about the API",
+    "body": "Hey!\n\nQuick question - do you know if the new API endpoint supports pagination?\n\nI'm working on the dashboard feature and wanted to check before implementing.\n\nNo rush, just whenever you have a moment.\n\nThanks!\nAlex",
+    "timestamp": "2024-01-15T15:00:00Z",
+    "recipients": ["you@company.com"],
+    "has_attachments": false
+  },
+  {
+    "id": "email_008",
+    "sender_email": "hr@company.com",
+    "sender_name": "HR Department",
+    "subject": "Action Required: Complete Benefits Enrollment by Friday",
+    "body": "Dear Employee,\n\nThis is a reminder that the open enrollment period for benefits ends this Friday, January 19th.\n\nPlease complete the following by the deadline:\n1. Review your current benefits selections\n2. Make any changes in the HR portal\n3. Submit your enrollment confirmation\n\nFailure to complete enrollment may result in loss of coverage.\n\nQuestions? Contact HR at hr@company.com\n\nThank you,\nHR Department",
+    "timestamp": "2024-01-15T09:30:00Z",
+    "recipients": ["all-employees@company.com"],
+    "has_attachments": false
+  }
+]
