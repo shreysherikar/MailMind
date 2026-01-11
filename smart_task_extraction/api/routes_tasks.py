@@ -4,17 +4,17 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from models.schemas import (
+from smart_task_extraction.models.schemas import (
     Task,
     TaskUpdate,
     TaskExtractRequest,
     TaskExtractResponse,
     TaskCompleteResponse,
-    Email,
 )
-from models.database import get_db
-from services.task_extractor import TaskExtractorService
-from services.scorer import PriorityScorerService
+from priority_scoring.models.schemas import Email
+from shared.database import get_db
+from smart_task_extraction.services.task_extractor import TaskExtractorService
+from priority_scoring.services.scorer import PriorityScorerService
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["Task Extraction"])
 

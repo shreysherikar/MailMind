@@ -5,18 +5,25 @@ A standalone microservice for auto-prioritizing emails and extracting actionable
 Part of the AI-powered email assistant hackathon project.
 """
 
+import sys
+from pathlib import Path
+
+# Add the project root to Python path for proper imports
+ROOT_DIR = Path(__file__).parent
+sys.path.insert(0, str(ROOT_DIR))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from models.database import init_db
-from api.routes_scoring import router as scoring_router
-from api.routes_tasks import router as tasks_router
-from api.routes_contacts import router as contacts_router
-from config import settings
+from shared.database import init_db
+from shared.config import settings
+from priority_scoring.api.routes_scoring import router as scoring_router
+from priority_scoring.api.routes_contacts import router as contacts_router
+from smart_task_extraction.api.routes_tasks import router as tasks_router
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Email Priority Scoring API",
+    title="Email Priority Scoring & Task Extraction API",
     description="""
 ## Email Priority Scoring & Smart Task Extraction
 
@@ -58,10 +65,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(scoring_router)
-app.include_router(tasks_router)
-app.include_router(contacts_router)
+# Include routers from both features
+app.include_router(scoring_router)    # Priority Scoring
+app.include_router(contacts_router)   # Contact Management (Priority Scoring)
+app.include_router(tasks_router)      # Task Extraction
 
 
 @app.on_event("startup")
@@ -69,7 +76,7 @@ async def startup_event():
     """Initialize database on startup."""
     init_db()
     print("✅ Database initialized")
-    print(f"🔑 Gemini API: {'Configured' if settings.gemini_api_key else 'Not configured (using fallback)'}")
+    print(f"🔑 Gemini API: {'Configured ✓' if settings.gemini_api_key else 'Not configured (using fallback)'}")
     print(f"🌍 Environment: {settings.environment}")
 
 
@@ -77,16 +84,20 @@ async def startup_event():
 async def root():
     """Root endpoint with API info."""
     return {
-        "name": "Email Priority Scoring API",
+        "name": "Email Priority Scoring & Task Extraction API",
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
-        "features": [
-            "Priority Scoring (0-100)",
-            "Smart Task Extraction",
-            "Contact Management",
-            "Historical Pattern Tracking"
-        ]
+        "features": {
+            "priority_scoring": {
+                "description": "Auto-prioritize emails (0-100 score)",
+                "endpoints": ["/api/v1/emails/score", "/api/v1/contacts"]
+            },
+            "smart_task_extraction": {
+                "description": "Extract actionable TODO items from emails",
+                "endpoints": ["/api/v1/tasks"]
+            }
+        }
     }
 
 
@@ -97,7 +108,11 @@ async def health_check():
         "status": "healthy",
         "gemini_api": "configured" if settings.gemini_api_key else "not_configured",
         "database": "connected",
-        "environment": settings.environment
+        "environment": settings.environment,
+        "features": {
+            "priority_scoring": "active",
+            "smart_task_extraction": "active"
+        }
     }
 
 

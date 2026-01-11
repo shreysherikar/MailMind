@@ -1,7 +1,6 @@
-"""API routes package."""
+"""Priority Scoring API routes."""
 
-from .routes_scoring import router as scoring_router
-from .routes_tasks import router as tasks_router
-from .routes_contacts import router as contacts_router
+from priority_scoring.api.routes_scoring import router as scoring_router
+from priority_scoring.api.routes_contacts import router as contacts_router
 
-__all__ = ["scoring_router", "tasks_router", "contacts_router"]
+__all__ = ["scoring_router", "contacts_router"]

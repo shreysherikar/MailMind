@@ -4,9 +4,9 @@ import re
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from models.schemas import Email, ScoreComponent, AuthorityType
-from models.database import ContactDB
-from .gemini_client import GeminiClient
+from priority_scoring.models.schemas import Email, ScoreComponent, AuthorityType
+from shared.database import ContactDB
+from shared.gemini_client import GeminiClient
 
 
 class AuthorityService:
