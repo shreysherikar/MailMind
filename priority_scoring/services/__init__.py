@@ -1,21 +1,17 @@
-"""Services package for business logic."""
+"""Priority Scoring services."""
 
-from .gemini_client import GeminiClient
-from .authority import AuthorityService
-from .deadline import DeadlineService
-from .tone import ToneService
-from .history import HistoryService
-from .calendar import CalendarService
-from .scorer import PriorityScorerService
-from .task_extractor import TaskExtractorService
+from priority_scoring.services.scorer import PriorityScorerService
+from priority_scoring.services.authority import AuthorityService
+from priority_scoring.services.deadline import DeadlineService
+from priority_scoring.services.tone import ToneService
+from priority_scoring.services.history import HistoryService
+from priority_scoring.services.calendar import CalendarService
 
 __all__ = [
-    "GeminiClient",
+    "PriorityScorerService",
     "AuthorityService",
     "DeadlineService",
     "ToneService",
     "HistoryService",
     "CalendarService",
-    "PriorityScorerService",
-    "TaskExtractorService",
 ]

@@ -3,7 +3,7 @@
 import re
 from typing import List, Tuple
 
-from models.schemas import Email, ScoreComponent
+from priority_scoring.models.schemas import Email, ScoreComponent
 
 
 class CalendarService:

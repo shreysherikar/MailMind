@@ -6,13 +6,14 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from models.schemas import (
-    Email, Task, TaskExtractResponse, SourceEmail, TaskStatus
+from smart_task_extraction.models.schemas import (
+    Task, TaskExtractResponse, SourceEmail, TaskStatus
 )
-from models.database import TaskDB
-from config import get_priority_level
-from .gemini_client import GeminiClient
-from .deadline import DeadlineService
+from priority_scoring.models.schemas import Email
+from shared.database import TaskDB
+from shared.config import get_priority_level
+from shared.gemini_client import GeminiClient
+from priority_scoring.services.deadline import DeadlineService
 
 
 class TaskExtractorService:
