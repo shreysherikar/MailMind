@@ -10,19 +10,20 @@ from shared.config import settings
 class GeminiClient:
     """Wrapper for Google Gemini API interactions."""
 
-    def __init__(self):
-        self.api_key = settings.gemini_api_key
-        self.model = None
-        self._initialized = False
-        
-        if self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
-                self._initialized = True
-            except Exception as e:
-                print(f"Warning: Failed to initialize Gemini: {e}")
-                self._initialized = False
+    def __init__(self, api_key: str = None):
+        """Initialize the Gemini client."""
+        try:
+            self.api_key = api_key or settings.gemini_api_key
+            if not self.api_key:
+                print("Warning: No Gemini API key provided. AI features will be disabled.")
+                self.model = None
+                return
+
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel('gemini-pro') # Changed from 'gemini-1.5-flash' to 'gemini-pro' as per snippet
+        except Exception as e:
+            print(f"Failed to initialize Gemini client: {e}")
+            self.model = None
 
     @property
     def is_available(self) -> bool:
