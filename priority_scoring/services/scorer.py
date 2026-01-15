@@ -9,6 +9,7 @@ from priority_scoring.models.schemas import (
     Email, PriorityScore, ScoreBreakdown, ScoreComponent,
     PriorityScoreBatchResponse
 )
+from shared.database import StoredEmailDB
 from shared.config import get_priority_level
 from shared.gemini_client import GeminiClient
 from priority_scoring.services.authority import AuthorityService
@@ -37,11 +38,38 @@ class PriorityScorerService:
         """Calculate complete priority score for an email."""
         
         # Calculate each component
-        authority_score = self.authority_service.calculate_score(email, db)
-        deadline_score = self.deadline_service.calculate_score(email)
-        tone_score = self.tone_service.calculate_score(email)
-        history_score = self.history_service.calculate_score(email, db)
-        calendar_score = self.calendar_service.calculate_score(email)
+        # Calculate each component
+        try:
+            authority_score = self.authority_service.calculate_score(email, db)
+        except Exception as e:
+            print(f"Authority service failed: {e}")
+            from priority_scoring.models.schemas import ScoreComponent
+            authority_score = ScoreComponent(score=50, confidence=0.0, reason="Service unavailable")
+
+        try:
+            deadline_score = self.deadline_service.calculate_score(email)
+        except Exception:
+             from priority_scoring.models.schemas import ScoreComponent
+             deadline_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
+
+        try:
+            tone_score = self.tone_service.calculate_score(email)
+        except Exception as e:
+            print(f"Tone service failed: {e}")
+            from priority_scoring.models.schemas import ScoreComponent
+            tone_score = ScoreComponent(score=50, confidence=0.0, reason="Service unavailable")
+            
+        try:
+            history_score = self.history_service.calculate_score(email, db)
+        except Exception:
+             from priority_scoring.models.schemas import ScoreComponent
+             history_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
+             
+        try:
+            calendar_score = self.calendar_service.calculate_score(email)
+        except Exception:
+             from priority_scoring.models.schemas import ScoreComponent
+             calendar_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
         
         # Build breakdown
         breakdown = ScoreBreakdown(
@@ -76,6 +104,10 @@ class PriorityScorerService:
             calendar_score.confidence * 0.15
         )
         
+        # Save email to database if db session provided
+        if db:
+            self._save_email_to_db(db, email)
+        
         return PriorityScore(
             email_id=email.id,
             score=total_score,
@@ -86,6 +118,23 @@ class PriorityScorerService:
             confidence=round(overall_confidence, 2),
             scored_at=datetime.utcnow()
         )
+
+    def _save_email_to_db(self, db: Session, email: Email):
+        """Save confirmed email to storage."""
+        existing = db.query(StoredEmailDB).filter(StoredEmailDB.id == email.id).first()
+        if not existing:
+            stored_email = StoredEmailDB(
+                id=email.id,
+                subject=email.subject,
+                sender=email.sender_email,  # Using sender_email from schema
+                recipient=email.recipients[0] if email.recipients else "",
+                body=email.body,
+                snippet=email.body[:150].replace("\n", " ").strip() + "...",
+                received_at=email.timestamp,
+                created_at=datetime.utcnow()
+            )
+            db.add(stored_email)
+            db.commit()
 
     def score_emails_batch(
         self,

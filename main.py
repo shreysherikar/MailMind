@@ -20,14 +20,15 @@ from shared.config import settings
 from priority_scoring.api.routes_scoring import router as scoring_router
 from priority_scoring.api.routes_contacts import router as contacts_router
 from smart_task_extraction.api.routes_tasks import router as tasks_router
+from followup_management.api.routes_followups import router as followups_router
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Email Priority Scoring & Task Extraction API",
+    title="MailMind - AI-Powered Email Command Center",
     description="""
-## Email Priority Scoring & Smart Task Extraction
+## MailMind - AI-Powered Email Command Center
 
-This API provides two core features for AI-powered email management:
+This API provides core features for intelligent email management:
 
 ### 1. Priority Scoring (0-100)
 Auto-prioritize emails based on:
@@ -43,6 +44,13 @@ Extract actionable TODO items from emails:
 - Due date extraction
 - Priority inherited from email score
 - Auto-archive trigger when tasks complete
+
+### 3. Follow-up Management
+Track sent emails awaiting replies:
+- AI-powered detection of emails expecting responses
+- Smart reply matching
+- Overdue tracking and alerts
+- Status management (waiting, replied, overdue)
 
 ### Priority Levels
 - 🔴 **Critical** (80-100): Immediate attention required
@@ -65,10 +73,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers from both features
+# Include routers from all features
 app.include_router(scoring_router)    # Priority Scoring
 app.include_router(contacts_router)   # Contact Management (Priority Scoring)
 app.include_router(tasks_router)      # Task Extraction
+app.include_router(followups_router)  # Follow-up Management
 
 
 @app.on_event("startup")
@@ -84,7 +93,7 @@ async def startup_event():
 async def root():
     """Root endpoint with API info."""
     return {
-        "name": "Email Priority Scoring & Task Extraction API",
+        "name": "MailMind - AI-Powered Email Command Center",
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs",
@@ -96,6 +105,10 @@ async def root():
             "smart_task_extraction": {
                 "description": "Extract actionable TODO items from emails",
                 "endpoints": ["/api/v1/tasks"]
+            },
+            "followup_management": {
+                "description": "Track sent emails awaiting replies",
+                "endpoints": ["/api/v1/followups"]
             }
         }
     }
@@ -111,7 +124,8 @@ async def health_check():
         "environment": settings.environment,
         "features": {
             "priority_scoring": "active",
-            "smart_task_extraction": "active"
+            "smart_task_extraction": "active",
+            "followup_management": "active"
         }
     }
 
