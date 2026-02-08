@@ -2,7 +2,19 @@
 
 import json
 from typing import Optional, Dict, Any
-import google.generativeai as genai
+
+try:
+    # Try new package first
+    import google.genai as genai
+    NEW_GENAI = True
+except ImportError:
+    try:
+        # Fall back to old package
+        import google.generativeai as genai
+        NEW_GENAI = False
+    except ImportError:
+        genai = None
+        NEW_GENAI = False
 
 from shared.config import settings
 
@@ -12,6 +24,7 @@ class GeminiClient:
 
     def __init__(self, api_key: str = None):
         """Initialize the Gemini client."""
+        self._initialized = False
         try:
             self.api_key = api_key or settings.gemini_api_key
             if not self.api_key:
@@ -19,8 +32,21 @@ class GeminiClient:
                 self.model = None
                 return
 
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-pro') # Changed from 'gemini-1.5-flash' to 'gemini-pro' as per snippet
+            if genai is None:
+                print("Warning: Google Generative AI package not installed. AI features will be disabled.")
+                self.model = None
+                return
+
+            if NEW_GENAI:
+                # New package
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+            else:
+                # Old package
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+            
+            self._initialized = True
         except Exception as e:
             print(f"Failed to initialize Gemini client: {e}")
             self.model = None
