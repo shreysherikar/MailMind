@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # API Keys
-    gemini_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None  # Groq Cloud API key (primary AI provider)
     
     # Database
     database_url: str = "sqlite:///./email_priority.db"

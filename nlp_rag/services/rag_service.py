@@ -9,16 +9,16 @@ from nlp_rag.models.schemas import (
     CompanyMemoryQuery, CompanyMemoryResponse
 )
 from nlp_rag.services.vector_store import get_vector_store
-from shared.gemini_client import GeminiClient
+from shared.groq_client import get_groq_client
 
 
 class RAGService:
     """Service for semantic search and question answering over emails."""
     
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
+    def __init__(self):
         """Initialize RAG service."""
         self.vector_store = get_vector_store()
-        self.gemini = gemini_client or GeminiClient()
+        self.groq = get_groq_client()
     
     def search_emails(self, query: SearchQuery) -> SearchResponse:
         """
@@ -122,8 +122,8 @@ class RAGService:
         
         context = "\n\n".join(context_parts)
         
-        # Generate answer using Gemini
-        if self.gemini.is_available:
+        # Generate answer using Groq or fallback
+        if self.groq.is_available:
             answer, confidence = self._generate_answer_with_ai(
                 question=query.question,
                 context=context
@@ -146,36 +146,20 @@ class RAGService:
         question: str,
         context: str
     ) -> tuple[str, float]:
-        """Generate answer using Gemini AI."""
-        prompt = f"""You are an AI assistant helping users find information from their email history.
-
-Based on the email excerpts below, answer the user's question. Be concise and cite which email(s) you're referencing.
-
-If the emails don't contain enough information to answer the question, say so honestly.
-
-Question: {question}
-
-Email Context:
-{context}
-
-Provide a clear, helpful answer based on the emails above. Start your answer directly without preamble."""
+        """Generate answer using Groq AI."""
+        if self.groq.is_available:
+            answer = self.groq.answer_question(question, context)
+            if answer:
+                # Estimate confidence based on answer content
+                if "don't have enough information" in answer.lower() or "can't find" in answer.lower():
+                    confidence = 0.3
+                elif "based on" in answer.lower() or "according to" in answer.lower():
+                    confidence = 0.8
+                else:
+                    confidence = 0.6
+                return answer, confidence
         
-        try:
-            response = self.gemini.model.generate_content(prompt)
-            answer = response.text.strip()
-            
-            # Estimate confidence based on answer content
-            if "don't have enough information" in answer.lower() or "can't find" in answer.lower():
-                confidence = 0.3
-            elif "based on" in answer.lower() or "according to" in answer.lower():
-                confidence = 0.8
-            else:
-                confidence = 0.6
-            
-            return answer, confidence
-        except Exception as e:
-            print(f"Error generating answer with AI: {e}")
-            return self._generate_answer_fallback(question, [])
+        return self._generate_answer_fallback(question, [])
     
     def _generate_answer_fallback(
         self,

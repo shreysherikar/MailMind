@@ -2,7 +2,7 @@
 
 from shared.config import settings, get_priority_level, PRIORITY_LEVELS
 from shared.database import Base, get_db, engine, init_db, ContactDB, ResponseHistoryDB, TaskDB, EmailScoreCache
-from shared.gemini_client import GeminiClient
+from shared.groq_client import get_groq_client
 
 __all__ = [
     "settings",
@@ -16,5 +16,5 @@ __all__ = [
     "ResponseHistoryDB",
     "TaskDB",
     "EmailScoreCache",
-    "GeminiClient",
+    "get_groq_client",
 ]
