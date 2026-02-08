@@ -6,8 +6,8 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from priority_scoring.models.schemas import Email, ScoreComponent
-from shared.database import ResponseHistoryDB
+from models.schemas import Email, ScoreComponent
+from models.database import ResponseHistoryDB
 
 
 class HistoryService:

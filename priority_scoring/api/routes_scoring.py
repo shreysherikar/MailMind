@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict, Optional, Any
 
-from priority_scoring.models.schemas import (
+from models.schemas import (
     EmailScoreRequest,
     EmailScoreBatchRequest,
     PriorityScore,
     PriorityScoreBatchResponse,
 )
-from shared.database import get_db
-from priority_scoring.services.scorer import PriorityScorerService
+from models.database import get_db
+from services.scorer import PriorityScorerService
 
 router = APIRouter(prefix="/api/v1/emails", tags=["Priority Scoring"])
 

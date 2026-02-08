@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 import dateparser
 
-from priority_scoring.models.schemas import Email, ScoreComponent
+from models.schemas import Email, ScoreComponent
 
 
 class DeadlineService:

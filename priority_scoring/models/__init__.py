@@ -1,31 +1,44 @@
-"""Priority Scoring models."""
+"""Models package for database and Pydantic schemas."""
 
-from priority_scoring.models.schemas import (
+from .schemas import (
     Email,
     EmailScoreRequest,
     EmailScoreBatchRequest,
-    ScoreComponent,
-    ScoreBreakdown,
     PriorityScore,
-    PriorityScoreBatchResponse,
+    ScoreBreakdown,
+    ScoreComponent,
+    Task,
+    TaskCreate,
+    TaskUpdate,
+    TaskExtractRequest,
+    TaskExtractResponse,
     Contact,
     ContactCreate,
     ContactUpdate,
     AuthorityType,
-    ResponseHistory,
 )
+from .database import Base, get_db, engine, ContactDB, ResponseHistoryDB, TaskDB
 
 __all__ = [
     "Email",
-    "EmailScoreRequest",
+    "EmailScoreRequest", 
     "EmailScoreBatchRequest",
-    "ScoreComponent",
-    "ScoreBreakdown",
     "PriorityScore",
-    "PriorityScoreBatchResponse",
+    "ScoreBreakdown",
+    "ScoreComponent",
+    "Task",
+    "TaskCreate",
+    "TaskUpdate",
+    "TaskExtractRequest",
+    "TaskExtractResponse",
     "Contact",
     "ContactCreate",
     "ContactUpdate",
     "AuthorityType",
-    "ResponseHistory",
+    "Base",
+    "get_db",
+    "engine",
+    "ContactDB",
+    "ResponseHistoryDB",
+    "TaskDB",
 ]
