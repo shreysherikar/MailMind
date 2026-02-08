@@ -77,9 +77,12 @@ Auto-prioritize emails based on:
 └────────────────────────┬────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────┐
-│  Google Gemini AI │ Sentence Transformers │ ChromaDB   │
+│  Groq AI (Llama 3.3 70B) with Rule-Based Fallback      │
+│  Sentence Transformers │ ChromaDB (with fallback)      │
 └─────────────────────────────────────────────────────────┘
 ```
+
+**AI Architecture**: Groq Cloud (primary) → Rule-based fallback (guaranteed)
 
 ## 🚀 Quick Start
 
@@ -104,7 +107,7 @@ pip install -r requirements.txt
 3. **Set up environment variables**
 ```bash
 cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Edit .env and add your GROQ_API_KEY (get free key from console.groq.com)
 ```
 
 4. **Run the demo**
@@ -215,9 +218,9 @@ print(f"Recommendations: {metrics.recommendations}")
 
 ### Backend
 - **FastAPI** - Modern, fast Python web framework
-- **Google Gemini AI** - Advanced NLP and text generation
+- **Groq Cloud AI** - Ultra-fast AI inference with Llama 3.3 70B
 - **Sentence Transformers** - Local embeddings for semantic search
-- **ChromaDB** - Vector database for RAG
+- **ChromaDB** - Vector database for RAG (with in-memory fallback)
 - **SQLAlchemy** - Database ORM
 - **Pydantic** - Data validation
 
@@ -228,7 +231,7 @@ print(f"Recommendations: {metrics.recommendations}")
 
 ### AI/ML
 - **sentence-transformers** - Text embeddings (all-MiniLM-L6-v2)
-- **Google Gemini** - Text generation and analysis
+- **Groq Cloud** - Ultra-fast AI inference (Llama 3.3 70B)
 - **ChromaDB** - Vector similarity search
 
 ## 📊 Performance
@@ -241,7 +244,7 @@ print(f"Recommendations: {metrics.recommendations}")
 ## 🔒 Privacy & Security
 
 - **Local Processing**: All NLP processing happens locally by default
-- **Optional External APIs**: Gemini AI is optional, fallbacks available
+- **Optional External AI**: Groq Cloud API is optional with rule-based fallback
 - **User Control**: Users control what gets indexed
 - **No Permanent Storage**: Email content not stored permanently
 - **Privacy-First Design**: Burnout detection is for early help, not surveillance
@@ -281,7 +284,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - AlgosQuest 2025 for the opportunity
-- Google Gemini AI for advanced NLP capabilities
+- Groq for ultra-fast AI inference
 - Sentence Transformers for local embeddings
 - ChromaDB for vector search capabilities
 

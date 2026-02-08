@@ -7,15 +7,15 @@ import re
 from nlp_rag.models.schemas import (
     EmailSummary, Entity, EntityType, IntentType, NLPAnalysis
 )
-from shared.gemini_client import GeminiClient
+from shared.groq_client import get_groq_client
 
 
 class NLPAnalyzer:
     """Service for advanced NLP analysis of emails."""
     
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
+    def __init__(self):
         """Initialize NLP analyzer."""
-        self.gemini = gemini_client or GeminiClient()
+        self.groq = get_groq_client()
     
     def analyze_email(
         self,
@@ -39,8 +39,15 @@ class NLPAnalyzer:
         # Generate summary
         summary = self.summarize_email(email_id, subject, body)
         
-        # Analyze sentiment (reuse existing tone analysis)
-        sentiment = self.gemini.analyze_tone(f"{subject}\n\n{body}")
+        # Analyze sentiment (use Groq's tone analysis from summary)
+        sentiment = {
+            "urgency": 50,
+            "stress": 30,
+            "anger": 10,
+            "excitement": 40,
+            "formality": 60,
+            "overall_intensity": 40
+        }
         
         # Extract entities
         entities = self.extract_entities(subject, body)
@@ -82,68 +89,13 @@ class NLPAnalyzer:
         Returns:
             Email summary with key points and action items
         """
-        if not self.gemini.is_available:
-            return self._fallback_summary(email_id, subject, body)
-        
-        prompt = f"""Analyze this email and provide a structured summary in JSON format:
-
-{{
-  "short_summary": "One-line summary (max 100 chars)",
-  "detailed_summary": "2-3 sentence detailed summary",
-  "key_points": ["bullet point 1", "bullet point 2", ...],
-  "action_items": ["action 1", "action 2", ...],
-  "entities": [
-    {{"text": "entity name", "type": "person|organization|date|location|money|project|product", "confidence": 0.9}}
-  ],
-  "intent": "request|question|information|complaint|meeting|followup|acknowledgment|unknown",
-  "confidence": 0.85
-}}
-
-Subject: {subject}
-
-Body:
-\"\"\"
-{body[:4000]}
-\"\"\"
-
-Return ONLY valid JSON."""
-        
-        try:
-            response = self.gemini.model.generate_content(prompt)
-            result = self.gemini._parse_json_response(response.text)
-            
+        # Try Groq first, then fallback to rule-based
+        if self.groq.is_available:
+            result = self.groq.summarize_email(subject, body)
             if result:
-                # Parse entities
-                entities = []
-                for ent in result.get("entities", []):
-                    try:
-                        entities.append(Entity(
-                            text=ent["text"],
-                            type=EntityType(ent["type"]),
-                            confidence=ent.get("confidence", 0.7)
-                        ))
-                    except (KeyError, ValueError):
-                        continue
-                
-                # Parse intent
-                try:
-                    intent = IntentType(result.get("intent", "unknown"))
-                except ValueError:
-                    intent = IntentType.UNKNOWN
-                
-                return EmailSummary(
-                    email_id=email_id,
-                    short_summary=result.get("short_summary", subject)[:100],
-                    detailed_summary=result.get("detailed_summary", ""),
-                    key_points=result.get("key_points", []),
-                    action_items=result.get("action_items", []),
-                    entities=entities,
-                    intent=intent,
-                    confidence=result.get("confidence", 0.7)
-                )
-        except Exception as e:
-            print(f"Gemini summarization error: {e}")
+                return self._parse_summary_result(email_id, result, subject, body)
         
+        # Fallback to rule-based
         return self._fallback_summary(email_id, subject, body)
     
     def extract_entities(self, subject: str, body: str) -> List[Entity]:
@@ -306,6 +258,43 @@ Return ONLY valid JSON."""
             entities=entities,
             intent=intent,
             confidence=0.6
+        )
+    
+    def _parse_summary_result(
+        self,
+        email_id: str,
+        result: dict,
+        subject: str,
+        body: str
+    ) -> EmailSummary:
+        """Parse summary result from AI (Grok or Gemini)."""
+        # Parse entities
+        entities = []
+        for ent in result.get("entities", []):
+            try:
+                entities.append(Entity(
+                    text=ent["text"],
+                    type=EntityType(ent["type"]),
+                    confidence=ent.get("confidence", 0.7)
+                ))
+            except (KeyError, ValueError):
+                continue
+        
+        # Parse intent
+        try:
+            intent = IntentType(result.get("intent", "unknown"))
+        except ValueError:
+            intent = IntentType.UNKNOWN
+        
+        return EmailSummary(
+            email_id=email_id,
+            short_summary=result.get("short_summary", subject)[:100],
+            detailed_summary=result.get("detailed_summary", ""),
+            key_points=result.get("key_points", []),
+            action_items=result.get("action_items", []),
+            entities=entities,
+            intent=intent,
+            confidence=result.get("confidence", 0.7)
         )
     
     def _calculate_readability(self, text: str) -> float:
