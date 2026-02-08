@@ -21,6 +21,9 @@ from priority_scoring.api.routes_scoring import router as scoring_router
 from priority_scoring.api.routes_contacts import router as contacts_router
 from smart_task_extraction.api.routes_tasks import router as tasks_router
 from followup_management.api.routes_followups import router as followups_router
+from nlp_rag.api.routes_nlp import router as nlp_router
+from nlp_rag.api.routes_rag import router as rag_router
+from nlp_rag.api.routes_burnout import router as burnout_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -78,6 +81,9 @@ app.include_router(scoring_router)    # Priority Scoring
 app.include_router(contacts_router)   # Contact Management (Priority Scoring)
 app.include_router(tasks_router)      # Task Extraction
 app.include_router(followups_router)  # Follow-up Management
+app.include_router(nlp_router)        # NLP Analysis
+app.include_router(rag_router)        # RAG & Semantic Search
+app.include_router(burnout_router)    # Burnout Detection
 
 
 @app.on_event("startup")
@@ -109,6 +115,18 @@ async def root():
             "followup_management": {
                 "description": "Track sent emails awaiting replies",
                 "endpoints": ["/api/v1/followups"]
+            },
+            "nlp_analysis": {
+                "description": "Advanced NLP: summarization, entity extraction, intent detection",
+                "endpoints": ["/api/v1/nlp"]
+            },
+            "semantic_search": {
+                "description": "RAG-powered semantic search and company memory",
+                "endpoints": ["/api/v1/rag"]
+            },
+            "burnout_detection": {
+                "description": "AI-powered burnout signal detection from email patterns",
+                "endpoints": ["/api/v1/burnout"]
             }
         }
     }
@@ -125,7 +143,10 @@ async def health_check():
         "features": {
             "priority_scoring": "active",
             "smart_task_extraction": "active",
-            "followup_management": "active"
+            "followup_management": "active",
+            "nlp_analysis": "active",
+            "semantic_search": "active",
+            "burnout_detection": "active"
         }
     }
 
