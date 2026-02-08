@@ -43,19 +43,19 @@ Auto-prioritize emails based on:
 - Overdue tracking and alerts
 - Status management (waiting, replied, overdue)
 
-### 4. 🧠 Advanced NLP Analysis (NEW)
+### 4. 🧠 Advanced NLP Analysis 
 - **Email Summarization**: One-line + detailed summaries with key points
 - **Named Entity Recognition**: Extract people, companies, dates, money
 - **Intent Detection**: Classify emails (request, question, complaint, etc.)
 - **Sentiment Analysis**: Analyze urgency, stress, and emotional tone
 
-### 5. 🔍 Semantic Search & Company Memory (NEW)
+### 5. 🔍 Semantic Search & Company Memory 
 - **Semantic Search**: Find emails by meaning, not just keywords
 - **Company Memory**: Ask questions like "What did legal say about the AWS contract?"
 - **RAG Technology**: Retrieval-Augmented Generation for intelligent answers
 - **Source Citations**: Answers include relevant source emails
 
-### 6. 😌 Burnout Detection (NEW - Our Boldest Feature)
+### 6. 😌 Burnout Detection 
 - Analyze email patterns (late-night emails, weekend work)
 - Track sentiment and stress levels over time
 - Risk scoring (0-100) with actionable recommendations
