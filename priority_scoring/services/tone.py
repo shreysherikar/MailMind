@@ -2,8 +2,8 @@
 
 from typing import Optional, Dict, Any
 
-from priority_scoring.models.schemas import Email, ScoreComponent
-from shared.gemini_client import GeminiClient
+from models.schemas import Email, ScoreComponent
+from .gemini_client import GeminiClient
 
 
 class ToneService:
