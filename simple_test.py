@@ -20,7 +20,7 @@ try:
     from nlp_rag.services.nlp_analyzer import get_nlp_analyzer
     
     analyzer = get_nlp_analyzer()
-    print("   ✓ NLP Analyzer loaded")
+    print("   [OK] NLP Analyzer loaded")
     
     # Test summarization
     summary = analyzer.summarize_email(
@@ -32,7 +32,7 @@ try:
     print(f"\n   Summary: {summary.short_summary}")
     print(f"   Intent: {summary.intent}")
     print(f"   Entities found: {len(summary.entities)}")
-    print("   ✓ Summarization working!")
+    print("   [OK] Summarization working!")
     
     # Test 2: Entity Extraction
     print("\n2. Testing Entity Extraction...")
@@ -44,7 +44,7 @@ try:
     print(f"   Found {len(entities)} entities:")
     for entity in entities[:3]:
         print(f"   - {entity.text} ({entity.type.value})")
-    print("   ✓ Entity extraction working!")
+    print("   [OK] Entity extraction working!")
     
     # Test 3: Intent Detection
     print("\n3. Testing Intent Detection...")
@@ -53,17 +53,17 @@ try:
         body="I need assistance with the login system."
     )
     print(f"   Detected intent: {intent}")
-    print("   ✓ Intent detection working!")
+    print("   [OK] Intent detection working!")
     
     print("\n" + "="*60)
-    print("✅ ALL TESTS PASSED!")
+    print("[PASS] ALL TESTS PASSED!")
     print("="*60)
     print("\nYour NLP features are working correctly!")
     print("Note: Running in fallback mode (no ChromaDB needed for this test)")
     print("\nTo test full features including search, see: nlp_rag/demo.py")
     
 except Exception as e:
-    print(f"\n❌ Error: {e}")
+    print(f"\n[FAIL] Error: {e}")
     print("\nTroubleshooting:")
     print("1. Make sure you're in the MailMind directory")
     print("2. Install dependencies: pip install -r requirements.txt")
