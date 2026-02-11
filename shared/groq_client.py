@@ -127,6 +127,101 @@ Provide a clear, helpful answer based on the emails above. Start your answer dir
             print(f"Groq question answering error: {e}")
             return None
     
+    def analyze_tone(self, text: str) -> Dict[str, Any]:
+        """Analyze emotional tone of email text."""
+        if not self.is_available:
+            return None
+
+        prompt = f"""Analyze the emotional tone of this email and return a JSON object with these fields:
+- urgency (0-100): How urgent does the sender seem?
+- stress (0-100): Level of stress/pressure in the tone
+- anger (0-100): Any signs of frustration or anger
+- excitement (0-100): Positive excitement or enthusiasm
+- formality (0-100): How formal is the tone (100 = very formal)
+- overall_intensity (0-100): Overall emotional intensity
+
+Email text:
+\"\"\"
+{text[:2000]}
+\"\"\"
+
+Return ONLY valid JSON, no other text."""
+
+        try:
+            response = self.generate_text(prompt)
+            if response:
+                return self._parse_json_response(response)
+        except Exception as e:
+            print(f"Groq tone analysis error: {e}")
+        
+        return None
+
+    def extract_tasks(self, subject: str, body: str) -> list:
+        """Extract actionable tasks from email content."""
+        if not self.is_available:
+            return []
+
+        prompt = f"""Extract actionable tasks from this email. Return a JSON array of tasks.
+Each task should have:
+- title: Brief task title (max 100 chars)
+- description: Detailed description
+- due_date: ISO date string if mentioned, null otherwise
+- due_date_type: "explicit" (specific date), "relative" (e.g., "next week"), or null
+- original_text: The exact text that contains this task
+- confidence: 0.0-1.0 how confident you are this is a real task
+
+Only extract ACTIONABLE items that require the recipient to do something.
+
+Subject: {subject}
+
+Body:
+\"\"\"
+{body[:3000]}
+\"\"\"
+
+Return ONLY a valid JSON array, no other text. If no tasks found, return empty array []."""
+
+        try:
+            response = self.generate_text(prompt)
+            if response:
+                result = self._parse_json_response(response)
+                if isinstance(result, list):
+                    return result
+        except Exception as e:
+            print(f"Groq task extraction error: {e}")
+        
+        return []
+
+    def infer_sender_authority(self, sender_name: str, sender_email: str, signature: str) -> Dict[str, Any]:
+        """Infer sender's authority level from email signature and context."""
+        if not self.is_available:
+            return None
+
+        prompt = f"""Analyze this email sender and determine their authority level.
+Return a JSON object with:
+- authority_type: One of "vip", "manager", "client", "recruiter", "colleague", "external", "unknown"
+- confidence: 0.0-1.0
+- title: Their job title if detectable, null otherwise
+- reasoning: Brief explanation
+
+Sender Name: {sender_name or 'Unknown'}
+Sender Email: {sender_email}
+Email Signature:
+\"\"\"
+{signature[:500] if signature else 'No signature'}
+\"\"\"
+
+Return ONLY valid JSON."""
+
+        try:
+            response = self.generate_text(prompt)
+            if response:
+                return self._parse_json_response(response)
+        except Exception as e:
+            print(f"Groq authority inference error: {e}")
+        
+        return None
+
     def _parse_json_response(self, text: str) -> Optional[Any]:
         """Parse JSON from Groq response."""
         text = text.strip()

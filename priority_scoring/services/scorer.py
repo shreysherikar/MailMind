@@ -11,7 +11,7 @@ from priority_scoring.models.schemas import (
 )
 from shared.database import StoredEmailDB
 from shared.config import get_priority_level
-from shared.gemini_client import GeminiClient
+from .gemini_client import GeminiClient
 from priority_scoring.services.authority import AuthorityService
 from priority_scoring.services.deadline import DeadlineService
 from priority_scoring.services.tone import ToneService

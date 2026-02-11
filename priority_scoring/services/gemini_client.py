@@ -1,61 +1,34 @@
-"""Google Gemini API client wrapper."""
+"""Google Gemini API client wrapper (Replaced by Groq)."""
 
 import json
 from typing import Optional, Dict, Any
-import google.generativeai as genai
 
 from config import settings
+from shared.groq_client import get_groq_client
 
 
 class GeminiClient:
-    """Wrapper for Google Gemini API interactions."""
+    """Wrapper that redirects Gemini calls to Groq (since User wants Groq only)."""
 
     def __init__(self):
-        self.api_key = settings.gemini_api_key
-        self.model = None
-        self._initialized = False
-        
-        if self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
-                self._initialized = True
-            except Exception as e:
-                print(f"Warning: Failed to initialize Gemini: {e}")
-                self._initialized = False
+        self.groq = get_groq_client()
+        self._initialized = self.groq.is_available
+        if not self._initialized:
+            print("Warning: Groq API not available (GeminiClient wrapper)")
 
     @property
     def is_available(self) -> bool:
-        """Check if Gemini API is available."""
-        return self._initialized and self.model is not None
+        """Check if backend (Groq) is available."""
+        return self.groq.is_available
 
     def analyze_tone(self, text: str) -> Dict[str, Any]:
         """Analyze emotional tone of email text."""
         if not self.is_available:
             return self._fallback_tone_analysis(text)
 
-        prompt = f"""Analyze the emotional tone of this email and return a JSON object with these fields:
-- urgency (0-100): How urgent does the sender seem?
-- stress (0-100): Level of stress/pressure in the tone
-- anger (0-100): Any signs of frustration or anger
-- excitement (0-100): Positive excitement or enthusiasm
-- formality (0-100): How formal is the tone (100 = very formal)
-- overall_intensity (0-100): Overall emotional intensity
-
-Email text:
-\"\"\"
-{text[:2000]}
-\"\"\"
-
-Return ONLY valid JSON, no other text."""
-
-        try:
-            response = self.model.generate_content(prompt)
-            result = self._parse_json_response(response.text)
-            if result:
-                return result
-        except Exception as e:
-            print(f"Gemini tone analysis error: {e}")
+        result = self.groq.analyze_tone(text)
+        if result:
+            return result
         
         return self._fallback_tone_analysis(text)
 
@@ -64,33 +37,9 @@ Return ONLY valid JSON, no other text."""
         if not self.is_available:
             return self._fallback_task_extraction(subject, body)
 
-        prompt = f"""Extract actionable tasks from this email. Return a JSON array of tasks.
-Each task should have:
-- title: Brief task title (max 100 chars)
-- description: Detailed description
-- due_date: ISO date string if mentioned, null otherwise
-- due_date_type: "explicit" (specific date), "relative" (e.g., "next week"), or null
-- original_text: The exact text that contains this task
-- confidence: 0.0-1.0 how confident you are this is a real task
-
-Only extract ACTIONABLE items that require the recipient to do something.
-
-Subject: {subject}
-
-Body:
-\"\"\"
-{body[:3000]}
-\"\"\"
-
-Return ONLY a valid JSON array, no other text. If no tasks found, return empty array []."""
-
-        try:
-            response = self.model.generate_content(prompt)
-            result = self._parse_json_response(response.text)
-            if isinstance(result, list):
-                return result
-        except Exception as e:
-            print(f"Gemini task extraction error: {e}")
+        result = self.groq.extract_tasks(subject, body)
+        if result:
+            return result
         
         return self._fallback_task_extraction(subject, body)
 
@@ -99,59 +48,11 @@ Return ONLY a valid JSON array, no other text. If no tasks found, return empty a
         if not self.is_available:
             return {"authority_type": "unknown", "confidence": 0.5, "title": None}
 
-        prompt = f"""Analyze this email sender and determine their authority level.
-Return a JSON object with:
-- authority_type: One of "vip", "manager", "client", "recruiter", "colleague", "external", "unknown"
-- confidence: 0.0-1.0
-- title: Their job title if detectable, null otherwise
-- reasoning: Brief explanation
-
-Sender Name: {sender_name or 'Unknown'}
-Sender Email: {sender_email}
-Email Signature:
-\"\"\"
-{signature[:500] if signature else 'No signature'}
-\"\"\"
-
-Return ONLY valid JSON."""
-
-        try:
-            response = self.model.generate_content(prompt)
-            result = self._parse_json_response(response.text)
-            if result:
-                return result
-        except Exception as e:
-            print(f"Gemini authority inference error: {e}")
+        result = self.groq.infer_sender_authority(sender_name, sender_email, signature)
+        if result:
+            return result
         
         return {"authority_type": "unknown", "confidence": 0.5, "title": None}
-
-    def _parse_json_response(self, text: str) -> Optional[Any]:
-        """Parse JSON from Gemini response, handling markdown code blocks."""
-        text = text.strip()
-        
-        # Remove markdown code blocks if present
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        
-        text = text.strip()
-        
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            # Try to find JSON in the response
-            start_idx = text.find('{')
-            if start_idx == -1:
-                start_idx = text.find('[')
-            if start_idx != -1:
-                try:
-                    return json.loads(text[start_idx:])
-                except Exception:
-                    pass
-            return None
 
     def _fallback_tone_analysis(self, text: str) -> Dict[str, Any]:
         """Rule-based fallback for tone analysis."""
