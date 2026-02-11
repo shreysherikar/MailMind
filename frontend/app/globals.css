@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+.mail-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.mail-btn {
+  background: var(--brand-gradient);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.mail-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}
+
+.mail-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--purple);
+}
+
+.mail-box {
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.mail-sidebar-item {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.mail-sidebar-item:hover {
+  background: #eef2ff;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+
+  /* ✅ Subtle light overlay */
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+
+  z-index: -1;
+}
+.features-btn {
+  padding: 12px 22px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  color: white;
+  text-decoration: none;
+
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(14px);
+
+  transition: all 0.35s ease;
+}
+
+.features-btn:hover {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.15)
+  );
+
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+}
