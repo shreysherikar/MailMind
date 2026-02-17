@@ -1,10 +1,16 @@
 """SQLAlchemy database models and connection setup."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, String, Integer, Float, DateTime, Text, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from config import settings
+
+
+def utc_now():
+    """Return current UTC time - used as default for DateTime columns."""
+    return datetime.now(timezone.utc)
+
 
 # Create engine
 engine = create_engine(
@@ -39,8 +45,8 @@ class ContactDB(Base):
     domain = Column(String, nullable=True, index=True)
     custom_priority_boost = Column(Integer, default=0)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
 
 class ResponseHistoryDB(Base):
@@ -56,8 +62,8 @@ class ResponseHistoryDB(Base):
     response_rate = Column(Float, default=0.0)
     last_email_received = Column(DateTime, nullable=True)
     last_response_sent = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
 
 class TaskDB(Base):
@@ -81,8 +87,8 @@ class TaskDB(Base):
     original_text = Column(Text, nullable=False)
     confidence = Column(Float, default=0.8)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
     completed_at = Column(DateTime, nullable=True)
 
 
@@ -96,7 +102,7 @@ class EmailScoreCache(Base):
     label = Column(String, nullable=False)
     breakdown_json = Column(Text, nullable=False)
     confidence = Column(Float, default=1.0)
-    scored_at = Column(DateTime, default=datetime.utcnow)
+    scored_at = Column(DateTime, default=utc_now)
 
 
 def init_db():
