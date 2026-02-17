@@ -8,7 +8,7 @@ from nlp_rag.models.schemas import (
     SearchQuery, SearchResponse, SearchResult,
     CompanyMemoryQuery, CompanyMemoryResponse
 )
-from nlp_rag.services.vector_store import get_vector_store
+from nlp_rag.services.vector_store_faiss import get_vector_store
 from shared.groq_client import get_groq_client
 
 
