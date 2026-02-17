@@ -5,15 +5,15 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
 from nlp_rag.models.schemas import BurnoutMetrics, BurnoutSignal
-from shared.gemini_client import GeminiClient
+from shared.groq_client import GroqClient, get_groq_client
 
 
 class BurnoutDetector:
     """Service for detecting burnout signals from email patterns."""
     
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
+    def __init__(self, groq_client: Optional[GroqClient] = None):
         """Initialize burnout detector."""
-        self.gemini = gemini_client or GeminiClient()
+        self.groq = groq_client or get_groq_client()
     
     def analyze_user_patterns(
         self,
@@ -62,7 +62,7 @@ class BurnoutDetector:
         
         for email in period_emails:
             text = f"{email.get('subject', '')} {email.get('body', '')}"
-            tone = self.gemini.analyze_tone(text)
+            tone = self.groq.analyze_tone(text)
             
             # Calculate overall sentiment (-1 to 1)
             sentiment = (

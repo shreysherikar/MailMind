@@ -1,12 +1,43 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession, signIn } from "next-auth/react";
 import SplashScreen from "@/components/SplashScreen";
 import Link from "next/link";
 
+interface Attachment {
+  filename: string;
+  mimeType: string;
+  attachmentId: string;
+}
+
+interface Email {
+  id: string;
+  threadId?: string;
+  messageId?: string;
+  subject: string;
+  from: string;
+  date: string;
+  snippet: string;
+  body?: string;
+  attachments?: Attachment[];
+}
+
+interface Task {
+  text: string;
+  done: boolean;
+}
 
 
+
+
+const LOGIN_SLIDES = [
+  "/login/slide1.png",
+  "/login/slide2.png",
+  "/login/slide3.png",
+  "/login/slide4.png",
+  "/login/slide5.png",
+];
 
 export default function Home() {
   const { data: session } = useSession();
@@ -14,15 +45,15 @@ export default function Home() {
     console.log("SESSION:", session);
   }, [session]);
 
-  const [hoverFile, setHoverFile] = useState<any>(null);
+  const [hoverFile, setHoverFile] = useState<Attachment | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
   // 🕒 Current Date & Time
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
-  const [geminiQuestion, setGeminiQuestion] = useState("");
-  const [geminiReply, setGeminiReply] = useState("");
-  const [loadingGemini, setLoadingGemini] = useState(false);
+  const [groqQuestion, setGroqQuestion] = useState("");
+  const [groqReply, setGroqReply] = useState("");
+  const [loadingGroq, setLoadingGroq] = useState(false);
 
 
 
@@ -34,10 +65,10 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // 🔔 Store New Emails List
-  const [newMails, setNewMails] = useState<any[]>([]);
+  const [newMails, setNewMails] = useState<Email[]>([]);
   // ✅ Toolbar Feature States
   const [showCompose, setShowCompose] = useState(false);
-  const [showGemini, setShowGemini] = useState(false);
+  const [showGroq, setShowGroq] = useState(false);
 
 
 
@@ -48,53 +79,17 @@ export default function Home() {
   const [editableReply, setEditableReply] = useState("");
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
-  const [aiPriorityMap, setAiPriorityMap] = useState<any>({});
-  // ⭐ Starred Emails
+  const [aiPriorityMap, setAiPriorityMap] = useState<Record<string, string>>({});
   const [starredIds, setStarredIds] = useState<string[]>([]);
-  // ✅ Load Starred Emails from localStorage on startup
-  useEffect(() => {
-    const savedStarred = localStorage.getItem("starredIds");
-
-    if (savedStarred) {
-      setStarredIds(JSON.parse(savedStarred));
-    }
-  }, []);
-
-
-  // ⏳ Snoozed Emails (hidden temporarily)
   const [snoozedIds, setSnoozedIds] = useState<string[]>([]);
-  // ✅ Load Snoozed Emails from localStorage on startup
-  useEffect(() => {
-    const savedSnoozed = localStorage.getItem("snoozedIds");
-
-    if (savedSnoozed) {
-      setSnoozedIds(JSON.parse(savedSnoozed));
-    }
-  }, []);
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-
-  // ✅ Done Emails (removed)
   const [doneIds, setDoneIds] = useState<string[]>([]);
-  // ✅ Load Saved Folders on Startup
+
+  // Load saved folders from localStorage on startup
   useEffect(() => {
-    const savedStarred = JSON.parse(localStorage.getItem("starredIds") || "[]");
-    const savedSnoozed = JSON.parse(localStorage.getItem("snoozedIds") || "[]");
-    const savedDone = JSON.parse(localStorage.getItem("doneIds") || "[]");
-
-    setStarredIds(savedStarred);
-    setSnoozedIds(savedSnoozed);
-    setDoneIds(savedDone);
-  }, []);
-
-  // ✅ Load Done Emails from localStorage on startup
-  useEffect(() => {
-    const savedDone = localStorage.getItem("doneIds");
-
-    if (savedDone) {
-      setDoneIds(JSON.parse(savedDone));
-    }
+    setStarredIds(JSON.parse(localStorage.getItem("starredIds") || "[]"));
+    setSnoozedIds(JSON.parse(localStorage.getItem("snoozedIds") || "[]"));
+    setDoneIds(JSON.parse(localStorage.getItem("doneIds") || "[]"));
   }, []);
 
   const [activeFolder, setActiveFolder] =
@@ -109,17 +104,17 @@ export default function Home() {
   const [aiReason, setAiReason] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
 
-  const [emails, setEmails] = useState<any[]>([]);
+  const [emails, setEmails] = useState<Email[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [selectedMail, setSelectedMail] = useState<any>(null);
+  const [selectedMail, setSelectedMail] = useState<Email | null>(null);
 
 
   const [summary, setSummary] = useState<string>("");
   const [summarizing, setSummarizing] = useState(false);
 
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   // ✅ FIX 1: Default tab to "All Mails"
   const [activeTab, setActiveTab] = useState("All Mails");
 
@@ -131,16 +126,7 @@ export default function Home() {
   const [urgency, setUrgency] = useState("Normal");
 
 
-  // ✅ Slides list (keep outside if)
-  const slides = [
-    "/login/slide1.png",
-    "/login/slide2.png",
-    "/login/slide3.png",
-    "/login/slide4.png",
-    "/login/slide5.png",
-  ];
 
-  // ✅ Slide state must be outside condition
   const [currentSlide, setCurrentSlide] = useState(0);
   // ⭐ Toggle Star
   function toggleStar() {
@@ -170,14 +156,14 @@ export default function Home() {
 
     setSelectedMail(null);
   }
-  async function askGemini() {
+  async function askGroq() {
     if (!selectedMail) {
       alert("Select an email first");
       return;
     }
 
-    setLoadingGemini(true);
-    setGeminiReply("");
+    setLoadingGroq(true);
+    setGroqReply("");
 
     const emailText =
       selectedMail.subject +
@@ -186,24 +172,24 @@ export default function Home() {
       "\n\n" +
       (selectedMail.body || "");
 
-    const res = await fetch("/api/gemini", {
+    const res = await fetch("/api/groq", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         emailText,
-        question: geminiQuestion || "Summarize this email clearly",
+        question: groqQuestion || "Summarize this email clearly",
       }),
     });
 
     const data = await res.json();
 
     if (data.reply) {
-      setGeminiReply(data.reply);
+      setGroqReply(data.reply);
     } else {
-      setGeminiReply("❌ Gemini failed: " + data.error);
+      setGroqReply("Groq failed: " + data.error);
     }
 
-    setLoadingGemini(false);
+    setLoadingGroq(false);
   }
 
 
@@ -241,10 +227,10 @@ export default function Home() {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => {
-        let next = Math.floor(Math.random() * slides.length);
+        let next = Math.floor(Math.random() * LOGIN_SLIDES.length);
 
         while (next === prev) {
-          next = Math.floor(Math.random() * slides.length);
+          next = Math.floor(Math.random() * LOGIN_SLIDES.length);
         }
 
         return next;
@@ -281,7 +267,7 @@ export default function Home() {
   };
 
   // ✅ FIXED: Combined function that fetches email AND generates AI
-  const openMailAndGenerateAI = async (id: string, mailPreview: any) => {
+  const openMailAndGenerateAI = async (id: string, mailPreview: Email) => {
     // Reset AI states
     setAiSummary("");
     setAiReason("");
@@ -364,7 +350,7 @@ export default function Home() {
     setLoadingReply(false);
   }
 
-  async function generateSummary(mail: any) {
+  async function generateSummary(mail: Email) {
     setLoadingAI(true);
     const emailContent = cleanEmailBody(mail.body || mail.snippet || "");
 
@@ -392,7 +378,7 @@ export default function Home() {
   }
 
   // ✅ NEW: AI Priority function for individual emails
-  async function generateAIPriorityForMail(mail: any) {
+  async function generateAIPriorityForMail(mail: Email) {
 
     // ✅ Already generated → skip
     if (aiPriorityMap[mail.id]) return;
@@ -409,7 +395,7 @@ export default function Home() {
     const data = await res.json();
 
     if (data.result?.score) {
-      setAiPriorityMap((prev: any) => ({
+      setAiPriorityMap((prev) => ({
         ...prev,
         [mail.id]: data.result,
       }));
@@ -417,7 +403,7 @@ export default function Home() {
   }
 
 
-  async function generateExplanation(mail: any) {
+  async function generateExplanation(mail: Email) {
     setLoadingAI(true);
     const res = await fetch("/api/ai/explain", {
       method: "POST",
@@ -581,40 +567,19 @@ export default function Home() {
         // 🔔 Notification Logic (New mails since last open)
         const lastSeen = localStorage.getItem("lastSeenTime");
 
-        let count = 0;
+          let freshMails: Email[] = [];
 
-        if (lastSeen) {
-          const lastTime = new Date(lastSeen).getTime();
+          if (lastSeen) {
+            const lastTime = new Date(lastSeen).getTime();
 
-          count = (data.emails || []).filter((mail: any) => {
-            const mailTime = new Date(mail.date).getTime();
-            return mailTime > lastTime;
-          }).length;
-        }
+            freshMails = (data.emails || []).filter((mail: Email) => {
+              const mailTime = new Date(mail.date).getTime();
+              return mailTime > lastTime;
+            });
+          }
 
-        // Set notification count
-        setNewMailCount(count);
-
-        // Update last seen time to NOW
-        // 🔔 Notification Logic (New mails since last click)
-
-        let freshMails: any[] = [];
-
-        if (lastSeen) {
-          const lastTime = new Date(lastSeen).getTime();
-
-          freshMails = (data.emails || []).filter((mail: any) => {
-            const mailTime = new Date(mail.date).getTime();
-            return mailTime > lastTime;
-          });
-        } else {
-          // First time user opens app
-          freshMails = [];
-        }
-
-        // Save new mails + count
-        setNewMails(freshMails);
-        setNewMailCount(freshMails.length);
+          setNewMails(freshMails);
+          setNewMailCount(freshMails.length);
 
 
       } catch (error) {
@@ -636,7 +601,7 @@ export default function Home() {
     await loadEmails(); // fetch fresh inbox
   };
 
-  function getEmailCategory(mail: any) {
+  function getEmailCategory(mail: Email) {
     const subject = (mail.subject || "").toLowerCase();
     const snippet = (mail.snippet || "").toLowerCase();
 
@@ -975,52 +940,33 @@ export default function Home() {
                 MailMind
               </h2>
             </div>
-            {/* 🕒 Center Date & Time */}
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-                padding: "8px 18px",
-                borderRadius: 14,
-                background: "rgba(255,255,255,0.12)",
-                backdropFilter: "blur(10px)",
-                color: "rgba(255,255,255,0.9)",
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-
-              {/* 🕒 Center Date & Time */}
-              {mounted && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    padding: "8px 18px",
-                    borderRadius: 14,
-                    background: "rgba(255,255,255,0.12)",
-                    backdropFilter: "blur(10px)",
-                    color: "rgba(255,255,255,0.9)",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    letterSpacing: "0.5px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {currentTime.toLocaleString("en-IN", {
-                    weekday: "short",
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              )}
-
-
-            </div>
+            {/* Date & Time */}
+            {mounted && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  padding: "8px 18px",
+                  borderRadius: 14,
+                  background: "rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(10px)",
+                  color: "rgba(255,255,255,0.9)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: "0.5px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {currentTime.toLocaleString("en-IN", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            )}
 
 
             {/* ✅ Right: Features Button */}
@@ -1190,7 +1136,7 @@ export default function Home() {
         >
           <img
             key={currentSlide}
-            src={slides[currentSlide]}
+            src={LOGIN_SLIDES[currentSlide]}
             alt="slide"
             style={{
               width: "100%",
@@ -2024,10 +1970,10 @@ export default function Home() {
                       🗑️
                     </button>
 
-                    {/* 💎 Gemini */}
+                    {/* 💎 Groq AI */}
                     <button
-                      onClick={() => setShowGemini(true)}
-                      title="Ask Gemini"
+                      onClick={() => setShowGroq(true)}
+                      title="Ask Groq"
                       style={{
                         padding: "6px 10px",
                         fontSize: 14,
@@ -2037,7 +1983,7 @@ export default function Home() {
                         background: "#DBEAFE",
                       }}
                     >
-                      💎 Ask Gemini
+                      💎 Ask Groq
                     </button>
                   </div>
                 </div>
@@ -2768,8 +2714,8 @@ export default function Home() {
           </div>
         </div>
       )}
-      {/* ✅ GEMINI MODAL POPUP */}
-      {showGemini && (
+      {/* ✅ GROQ AI MODAL POPUP */}
+      {showGroq && (
         <div
           style={{
             position: "fixed",
@@ -2794,15 +2740,15 @@ export default function Home() {
             }}
           >
             <h2 style={{ fontWeight: 800, fontSize: 18 }}>
-              💎 Ask Gemini
+              💎 Ask Groq AI
             </h2>
 
             {/* Question Input */}
             <textarea
               rows={4}
-              value={geminiQuestion}
-              onChange={(e) => setGeminiQuestion(e.target.value)}
-              placeholder="Ask Gemini about this email..."
+              value={groqQuestion}
+              onChange={(e) => setGroqQuestion(e.target.value)}
+              placeholder="Ask Groq about this email..."
               style={{
                 width: "100%",
                 padding: 12,
@@ -2814,7 +2760,7 @@ export default function Home() {
 
             {/* Ask Button */}
             <button
-              onClick={askGemini}
+              onClick={askGroq}
               style={{
                 marginTop: 14,
                 width: "100%",
@@ -2827,11 +2773,11 @@ export default function Home() {
                 cursor: "pointer",
               }}
             >
-              {loadingGemini ? "Thinking..." : "Ask Gemini 💎"}
+              {loadingGroq ? "Thinking..." : "Ask Groq 💎"}
             </button>
 
             {/* Reply Output */}
-            {geminiReply && (
+            {groqReply && (
               <div
                 style={{
                   marginTop: 14,
@@ -2843,16 +2789,16 @@ export default function Home() {
                   border: "1px solid #E5E7EB",
                 }}
               >
-                {geminiReply}
+                {groqReply}
               </div>
             )}
 
             {/* Close */}
             <button
               onClick={() => {
-                setShowGemini(false);
-                setGeminiQuestion("");
-                setGeminiReply("");
+                setShowGroq(false);
+                setGroqQuestion("");
+                setGroqReply("");
               }}
               style={{
                 marginTop: 14,

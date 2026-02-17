@@ -4,10 +4,10 @@ export async function POST(req: Request) {
     try {
         const { emailText, question } = await req.json();
 
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.GROQ_API_KEY;
 
         if (!apiKey) {
-            return NextResponse.json({ error: "Missing Gemini API Key" });
+            return NextResponse.json({ error: "Missing Groq API Key" });
         }
 
         const prompt = `
@@ -23,32 +23,32 @@ Answer clearly:
 `;
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+            "https://api.groq.com/openai/v1/chat/completions",
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [{ text: prompt }],
-                        },
+                    model: "llama-3.3-70b-versatile",
+                    messages: [
+                        { role: "user", content: prompt },
                     ],
+                    max_tokens: 1000,
+                    temperature: 0.7,
                 }),
             }
         );
 
         const data = await response.json();
 
-        console.log("Gemini Response:", data);
-
         const reply =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-            "❌ No response from Gemini";
+            data?.choices?.[0]?.message?.content ||
+            "No response from Groq";
 
         return NextResponse.json({ reply });
     } catch (err) {
-        return NextResponse.json({ error: "Gemini API Failed" });
+        return NextResponse.json({ error: "Groq API Failed" });
     }
 }

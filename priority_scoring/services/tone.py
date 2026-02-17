@@ -3,22 +3,22 @@
 from typing import Optional, Dict, Any
 
 from models.schemas import Email, ScoreComponent
-from .gemini_client import GeminiClient
+from .groq_client import GroqClient, get_groq_client
 
 
 class ToneService:
     """Service for analyzing emotional tone of emails."""
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
 
     def calculate_score(self, email: Email) -> ScoreComponent:
         """Calculate emotional tone score from email."""
         
         text = f"{email.subject}\n\n{email.body}"
         
-        # Get tone analysis (from Gemini or fallback)
-        tone_data = self.gemini.analyze_tone(text)
+        # Get tone analysis (from Groq or fallback)
+        tone_data = self.groq.analyze_tone(text)
         
         # Calculate weighted score from tone components
         score = self._calculate_tone_score(tone_data)
@@ -96,7 +96,7 @@ class ToneService:
         
         # If we got detailed analysis, higher confidence
         if all(key in tone_data for key in ["urgency", "stress", "anger", "excitement", "formality"]):
-            return 0.85 if self.gemini.is_available else 0.65
+            return 0.85 if self.groq.is_available else 0.65
         
         return 0.5
 
@@ -104,11 +104,11 @@ class ToneService:
         """Get detailed tone analysis for debugging/display."""
         
         text = f"{email.subject}\n\n{email.body}"
-        tone_data = self.gemini.analyze_tone(text)
+        tone_data = self.groq.analyze_tone(text)
         
         return {
             "raw_scores": tone_data,
             "priority_score": self._calculate_tone_score(tone_data),
             "summary": self._generate_reason(tone_data),
-            "api_available": self.gemini.is_available
+            "api_available": self.groq.is_available
         }

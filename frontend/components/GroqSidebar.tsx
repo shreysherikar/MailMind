@@ -2,19 +2,26 @@
 
 import React, { useState } from "react";
 
-export default function GeminiSidebar({ selectedMail }: any) {
+interface GroqSidebarProps {
+    selectedMail: {
+        subject: string;
+        snippet: string;
+        body?: string;
+    } | null;
+}
+
+export default function GroqSidebar({ selectedMail }: GroqSidebarProps) {
     const [question, setQuestion] = useState("");
     const [reply, setReply] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // ✅ Ask Gemini API Function
-    async function askGemini() {
+    async function askGroq() {
         if (!selectedMail) return;
 
         setLoading(true);
         setReply("");
 
-        const res = await fetch("/api/gemini", {
+        const res = await fetch("/api/groq", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -30,7 +37,7 @@ export default function GeminiSidebar({ selectedMail }: any) {
 
         const data = await res.json();
 
-        setReply(data.reply || "❌ No response from Gemini");
+        setReply(data.reply || "No response from Groq");
         setLoading(false);
     }
 
@@ -46,12 +53,10 @@ export default function GeminiSidebar({ selectedMail }: any) {
                 height: "100%",
             }}
         >
-            {/* ✅ Header */}
             <h2 style={{ fontWeight: 800, fontSize: 18, marginBottom: 14 }}>
-                💎 Gemini Assistant
+                Groq Assistant
             </h2>
 
-            {/* ✅ Suggestions */}
             <div style={{ fontSize: 13, color: "#555", marginBottom: 18 }}>
                 <p style={{ marginBottom: 8 }}>Try asking:</p>
 
@@ -59,29 +64,28 @@ export default function GeminiSidebar({ selectedMail }: any) {
                     onClick={() => setQuestion("Summarize this email")}
                     style={suggestBtn}
                 >
-                    ✨ Summarize
+                    Summarize
                 </button>
 
                 <button
                     onClick={() => setQuestion("What action should I take?")}
                     style={suggestBtn}
                 >
-                    ✅ Action Needed
+                    Action Needed
                 </button>
 
                 <button
                     onClick={() => setQuestion("Write a reply for this email")}
                     style={suggestBtn}
                 >
-                    ✍ Draft Reply
+                    Draft Reply
                 </button>
             </div>
 
-            {/* ✅ Input Box */}
             <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Ask Gemini about this email..."
+                placeholder="Ask Groq about this email..."
                 rows={3}
                 style={{
                     width: "100%",
@@ -93,9 +97,8 @@ export default function GeminiSidebar({ selectedMail }: any) {
                 }}
             />
 
-            {/* ✅ Ask Button */}
             <button
-                onClick={askGemini}
+                onClick={askGroq}
                 style={{
                     marginTop: 12,
                     padding: 12,
@@ -107,10 +110,9 @@ export default function GeminiSidebar({ selectedMail }: any) {
                     cursor: "pointer",
                 }}
             >
-                {loading ? "Thinking..." : "Ask Gemini →"}
+                {loading ? "Thinking..." : "Ask Groq"}
             </button>
 
-            {/* ✅ Reply Output Box */}
             <div
                 style={{
                     marginTop: 18,
@@ -124,17 +126,16 @@ export default function GeminiSidebar({ selectedMail }: any) {
                     overflowY: "auto",
                 }}
             >
-                {reply || "Gemini will answer here..."}
+                {reply || "Groq will answer here..."}
             </div>
         </div>
     );
 }
 
-/* ✅ Suggest Button Style (FIXED TS ERROR) */
 const suggestBtn = {
     display: "block",
     width: "100%",
-    textAlign: "left" as const, // ✅ FIX HERE
+    textAlign: "left" as const,
     padding: "8px 10px",
     marginBottom: 6,
     borderRadius: 10,

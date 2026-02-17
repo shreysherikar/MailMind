@@ -1,6 +1,6 @@
 """SQLAlchemy database models and connection setup."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, String, Integer, Float, DateTime, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -40,8 +40,8 @@ class ContactDB(Base):
     domain = Column(String, nullable=True, index=True)
     custom_priority_boost = Column(Integer, default=0)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class ResponseHistoryDB(Base):
@@ -57,8 +57,8 @@ class ResponseHistoryDB(Base):
     response_rate = Column(Float, default=0.0)
     last_email_received = Column(DateTime, nullable=True)
     last_response_sent = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class TaskDB(Base):
@@ -82,8 +82,8 @@ class TaskDB(Base):
     original_text = Column(Text, nullable=False)
     confidence = Column(Float, default=0.8)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
 
@@ -97,7 +97,7 @@ class EmailScoreCache(Base):
     label = Column(String, nullable=False)
     breakdown_json = Column(Text, nullable=False)
     confidence = Column(Float, default=1.0)
-    scored_at = Column(DateTime, default=datetime.utcnow)
+    scored_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class FollowUpDB(Base):
@@ -134,8 +134,8 @@ class FollowUpDB(Base):
     # Metadata
     thread_id = Column(String, nullable=True, index=True)
     reminder_sent = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class StoredEmailDB(Base):
@@ -151,8 +151,8 @@ class StoredEmailDB(Base):
     is_sent = Column(Boolean, default=False)
     
     # Metadata
-    received_at = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    received_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Link to caching
     score_cache_id = Column(String, nullable=True)

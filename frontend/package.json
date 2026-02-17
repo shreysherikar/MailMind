@@ -9,8 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@google/genai": "^1.40.0",
-    "@google/generative-ai": "^0.24.1",
     "framer-motion": "^12.34.0",
     "googleapis": "^170.1.0",
     "groq-sdk": "^0.37.0",

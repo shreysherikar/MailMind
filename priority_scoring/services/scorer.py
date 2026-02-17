@@ -11,7 +11,7 @@ from models.schemas import (
 )
 from shared.database import StoredEmailDB
 from shared.config import get_priority_level
-from .gemini_client import GeminiClient
+from .groq_client import GroqClient, get_groq_client
 from services.authority import AuthorityService
 from services.deadline import DeadlineService
 from services.tone import ToneService
@@ -22,11 +22,11 @@ from services.calendar import CalendarService
 class PriorityScorerService:
     """Main service that orchestrates all scoring components."""
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
-        self.authority_service = AuthorityService(self.gemini)
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
+        self.authority_service = AuthorityService(self.groq)
         self.deadline_service = DeadlineService()
-        self.tone_service = ToneService(self.gemini)
+        self.tone_service = ToneService(self.groq)
         self.history_service = HistoryService()
         self.calendar_service = CalendarService()
 

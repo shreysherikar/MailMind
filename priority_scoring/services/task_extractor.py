@@ -11,15 +11,15 @@ from models.schemas import (
 )
 from models.database import TaskDB
 from config import get_priority_level
-from .gemini_client import GeminiClient
+from .groq_client import GroqClient, get_groq_client
 from .deadline import DeadlineService
 
 
 class TaskExtractorService:
     """Service for extracting actionable tasks from emails."""
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
         self.deadline_service = DeadlineService()
 
     def extract_tasks(
@@ -30,8 +30,8 @@ class TaskExtractorService:
     ) -> TaskExtractResponse:
         """Extract tasks from an email."""
         
-        # Get raw task data from Gemini or fallback
-        raw_tasks = self.gemini.extract_tasks(email.subject, email.body)
+        # Get raw task data from Groq or fallback
+        raw_tasks = self.groq.extract_tasks(email.subject, email.body)
         
         # Convert to Task objects
         tasks = []
