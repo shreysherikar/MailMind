@@ -1,6 +1,6 @@
 """Smart task extraction service."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
 
@@ -121,7 +121,7 @@ class TaskExtractorService:
             if hasattr(db_task, key) and value is not None:
                 setattr(db_task, key, value)
         
-        db_task.updated_at = datetime.utcnow()
+        db_task.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_task)
         
@@ -136,8 +136,8 @@ class TaskExtractorService:
             return {"error": "Task not found"}
         
         db_task.status = TaskStatus.COMPLETED.value
-        db_task.completed_at = datetime.utcnow()
-        db_task.updated_at = datetime.utcnow()
+        db_task.completed_at = datetime.now(timezone.utc)
+        db_task.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_task)
         
@@ -213,7 +213,7 @@ class TaskExtractorService:
             ),
             original_text=raw_task.get("original_text", ""),
             confidence=raw_task.get("confidence", 0.7),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
     def _save_task_to_db(self, db: Session, task: Task):

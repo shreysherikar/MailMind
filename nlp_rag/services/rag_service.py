@@ -1,7 +1,7 @@
 """RAG (Retrieval-Augmented Generation) service for company memory."""
 
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 
 from nlp_rag.models.schemas import (
@@ -52,7 +52,7 @@ class RAGService:
             try:
                 date = datetime.fromisoformat(result["date"])
             except (ValueError, TypeError):
-                date = datetime.utcnow()
+                date = datetime.now(timezone.utc)
             
             results.append(SearchResult(
                 email_id=result["email_id"],

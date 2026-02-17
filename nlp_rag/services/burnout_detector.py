@@ -1,6 +1,6 @@
 """Burnout detection service for analyzing email patterns."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
@@ -36,7 +36,7 @@ class BurnoutDetector:
             return self._empty_metrics(user_email, period_days)
         
         # Filter emails within period
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=period_days)
         
         period_emails = [
@@ -335,7 +335,7 @@ class BurnoutDetector:
     
     def _empty_metrics(self, user_email: str, period_days: int) -> BurnoutMetrics:
         """Return empty metrics when no data available."""
-        end_date = datetime.utcnow()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=period_days)
         
         return BurnoutMetrics(

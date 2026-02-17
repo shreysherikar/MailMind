@@ -1,6 +1,6 @@
 """Main priority scoring orchestrator service."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from sqlalchemy.orm import Session
@@ -116,7 +116,7 @@ class PriorityScorerService:
             badge=priority_info["badge"],
             breakdown=breakdown,
             confidence=round(overall_confidence, 2),
-            scored_at=datetime.utcnow()
+            scored_at=datetime.now(timezone.utc)
         )
 
     def _save_email_to_db(self, db: Session, email: Email):
@@ -131,7 +131,7 @@ class PriorityScorerService:
                 body=email.body,
                 snippet=email.body[:150].replace("\n", " ").strip() + "...",
                 received_at=email.timestamp,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             db.add(stored_email)
             db.commit()

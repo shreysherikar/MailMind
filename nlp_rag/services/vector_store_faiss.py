@@ -1,7 +1,7 @@
 """Vector store for semantic search using FAISS."""
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 import pickle
 import os
@@ -167,7 +167,7 @@ class FAISSVectorStore:
                 "email_id": email_id,
                 "subject": subject,
                 "sender": email.get("sender", ""),
-                "date": email.get("date", datetime.utcnow()).isoformat(),
+                "date": email.get("date", datetime.now(timezone.utc)).isoformat(),
                 "text_preview": text[:500]
             })
         

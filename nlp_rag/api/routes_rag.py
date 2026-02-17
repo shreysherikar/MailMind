@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Body
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from priority_scoring.models.schemas import Email
 from nlp_rag.models.schemas import (
@@ -70,7 +70,7 @@ async def index_email(email: Email):
     
     try:
         # Parse date if it's a string
-        date = email.date if isinstance(email.date, datetime) else datetime.utcnow()
+        date = email.date if isinstance(email.date, datetime) else datetime.now(timezone.utc)
         
         rag_service.index_email(
             email_id=email.id,
@@ -106,7 +106,7 @@ async def index_emails_batch(emails: List[Email]):
         # Convert Email objects to dicts
         email_dicts = []
         for email in emails:
-            date = email.date if isinstance(email.date, datetime) else datetime.utcnow()
+            date = email.date if isinstance(email.date, datetime) else datetime.now(timezone.utc)
             email_dicts.append({
                 "id": email.id,
                 "subject": email.subject,

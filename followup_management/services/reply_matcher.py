@@ -1,7 +1,7 @@
 """Reply matching service for detecting replies to tracked follow-ups."""
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from sqlalchemy.orm import Session
@@ -64,10 +64,10 @@ class ReplyMatcherService:
         if matched_followup:
             # Update the follow-up status
             matched_followup.status = FollowUpStatus.REPLIED.value
-            matched_followup.replied_at = datetime.utcnow()
+            matched_followup.replied_at = datetime.now(timezone.utc)
             matched_followup.reply_email_id = email.id
             matched_followup.reply_subject = email.subject
-            matched_followup.updated_at = datetime.utcnow()
+            matched_followup.updated_at = datetime.now(timezone.utc)
             db.commit()
             
             return ReplyCheckResponse(

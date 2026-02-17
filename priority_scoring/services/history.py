@@ -1,6 +1,6 @@
 """Historical response patterns service."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
@@ -84,8 +84,8 @@ class HistoryService:
         history.response_rate = (
             history.total_responses_sent / max(history.total_emails_received, 1)
         )
-        history.last_response_sent = datetime.utcnow()
-        history.updated_at = datetime.utcnow()
+        history.last_response_sent = datetime.now(timezone.utc)
+        history.updated_at = datetime.now(timezone.utc)
         
         db.commit()
 
@@ -128,7 +128,7 @@ class HistoryService:
             total_response_time_hours=0.0,
             avg_response_time_hours=0.0,
             response_rate=0.0,
-            last_email_received=datetime.utcnow(),
+            last_email_received=datetime.now(timezone.utc),
         )
         
         db.add(history)
@@ -145,11 +145,11 @@ class HistoryService:
         """Update history when new email is received."""
         
         history.total_emails_received += 1
-        history.last_email_received = datetime.utcnow()
+        history.last_email_received = datetime.now(timezone.utc)
         history.response_rate = (
             history.total_responses_sent / max(history.total_emails_received, 1)
         )
-        history.updated_at = datetime.utcnow()
+        history.updated_at = datetime.now(timezone.utc)
         
         db.commit()
 

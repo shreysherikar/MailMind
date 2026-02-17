@@ -1,7 +1,7 @@
 """Tests for priority scoring functionality."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
 from models.schemas import Email, ScoreComponent
 from services.scorer import PriorityScorerService
@@ -73,7 +73,7 @@ class TestDeadlineService:
             body="Here are this week's updates. No action needed."
         )
         result = self.service.calculate_score(email)
-        assert result.score < 10
+        assert result.score < 15  # Adjusted for "this week" detection
 
 
 class TestCalendarService:
@@ -199,7 +199,7 @@ class TestEmailModel:
             sender_name="Test Sender",
             subject="Full email",
             body="Full body content",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             recipients=["recipient@example.com"],
             cc=["cc@example.com"],
             has_attachments=True

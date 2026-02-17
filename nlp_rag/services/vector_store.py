@@ -1,7 +1,7 @@
 """Vector store for semantic search using ChromaDB."""
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 try:
@@ -131,7 +131,7 @@ class VectorStore:
                 "email_id": email_id,
                 "subject": subject,
                 "sender": email.get("sender", ""),
-                "date": email.get("date", datetime.utcnow()).isoformat(),
+                "date": email.get("date", datetime.now(timezone.utc)).isoformat(),
                 "text_preview": text[:500]
             })
         

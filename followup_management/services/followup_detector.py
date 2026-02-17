@@ -1,6 +1,6 @@
 """Follow-up detection service for analyzing sent emails."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import uuid
 import json
@@ -165,7 +165,7 @@ class FollowUpDetectorService:
                 else:
                     setattr(db_followup, key, value)
         
-        db_followup.updated_at = datetime.utcnow()
+        db_followup.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_followup)
         
@@ -182,7 +182,7 @@ class FollowUpDetectorService:
         
         return self.update_followup(db, followup_id, {
             "status": FollowUpStatus.REPLIED,
-            "replied_at": datetime.utcnow(),
+            "replied_at": datetime.now(timezone.utc),
             "reply_email_id": reply_email_id,
             "reply_subject": reply_subject
         })
@@ -400,7 +400,7 @@ Return ONLY valid JSON, no other text."""
             snippet += "..."
         
         # Calculate expected reply date
-        expected_reply_by = datetime.utcnow() + timedelta(days=intent.suggested_followup_days)
+        expected_reply_by = datetime.now(timezone.utc) + timedelta(days=intent.suggested_followup_days)
         
         return FollowUp(
             id=str(uuid.uuid4()),
@@ -417,8 +417,8 @@ Return ONLY valid JSON, no other text."""
             confidence=intent.confidence,
             detection_reasons=intent.reasons,
             thread_id=thread_id,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
 
     def _update_waiting_status(self, db: Session):
@@ -428,7 +428,7 @@ Return ONLY valid JSON, no other text."""
             FollowUpDB.status == FollowUpStatus.WAITING.value
         ).all()
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         for followup in waiting_followups:
             days_waiting = (now - followup.sent_at).days
