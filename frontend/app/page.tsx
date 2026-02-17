@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { signOut, useSession, signIn } from "next-auth/react";
 import SplashScreen from "@/components/SplashScreen";
 import Link from "next/link";
@@ -21,6 +21,7 @@ interface Email {
   snippet: string;
   body?: string;
   attachments?: Attachment[];
+  label?: string[];
 }
 
 interface Task {
@@ -79,7 +80,7 @@ export default function Home() {
   const [editableReply, setEditableReply] = useState("");
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
-  const [aiPriorityMap, setAiPriorityMap] = useState<Record<string, string>>({});
+  const [aiPriorityMap, setAiPriorityMap] = useState<Record<string, { priority: string; reason: string }>>({});
   const [starredIds, setStarredIds] = useState<string[]>([]);
   const [snoozedIds, setSnoozedIds] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -2450,7 +2451,7 @@ export default function Home() {
                 </div>
 
                 {/* 📎 Attachments Section */}
-                {selectedMail?.attachments?.length > 0 && (
+                {(selectedMail?.attachments?.length ?? 0) > 0 && (
                   <div
                     style={{
                       marginTop: 20,
@@ -2464,7 +2465,7 @@ export default function Home() {
                       📎 Attachments
                     </h3>
 
-                    {selectedMail.attachments.map((file: any) => (
+                    {selectedMail.attachments?.map((file: any) => (
                       <div
                         key={file.attachmentId}
                         style={{
