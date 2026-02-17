@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from models.schemas import Email, ScoreComponent, AuthorityType
 from models.database import ContactDB
-from .gemini_client import GeminiClient
+from .groq_client import GroqClient, get_groq_client
 
 
 class AuthorityService:
@@ -36,8 +36,8 @@ class AuthorityService:
         "manager": ["manager", "lead", "head", "supervisor", "chief"],
     }
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
 
     def calculate_score(
         self,
@@ -75,8 +75,8 @@ class AuthorityService:
         signature = self._extract_signature(email.body)
         ai_result = None
         
-        if self.gemini.is_available:
-            ai_result = self.gemini.infer_sender_authority(
+        if self.groq.is_available:
+            ai_result = self.groq.infer_sender_authority(
                 sender_name, sender_email, signature
             )
         

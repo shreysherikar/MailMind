@@ -127,6 +127,105 @@ Provide a clear, helpful answer based on the emails above. Start your answer dir
             print(f"Groq question answering error: {e}")
             return None
     
+    def analyze_tone(self, text: str) -> Dict[str, Any]:
+        """Analyze emotional tone of email text."""
+        if not self.is_available:
+            return self._fallback_tone_analysis(text)
+
+        prompt = f"""Analyze the emotional tone of this email and return a JSON object with these fields:
+- urgency (0-100): How urgent does the sender seem?
+- stress (0-100): Level of stress/pressure in the tone
+- anger (0-100): Any signs of frustration or anger
+- excitement (0-100): Positive excitement or enthusiasm
+- formality (0-100): How formal is the tone (100 = very formal)
+- overall_intensity (0-100): Overall emotional intensity
+
+Email text:
+\"\"\"
+{text[:2000]}
+\"\"\"
+
+Return ONLY valid JSON, no other text."""
+
+        try:
+            response = self.generate_text(prompt, max_tokens=500)
+            if response:
+                result = self._parse_json_response(response)
+                if result:
+                    return result
+        except Exception as e:
+            print(f"Groq tone analysis error: {e}")
+        
+        return self._fallback_tone_analysis(text)
+
+    def extract_tasks(self, subject: str, body: str) -> list:
+        """Extract actionable tasks from email content."""
+        if not self.is_available:
+            return self._fallback_task_extraction(subject, body)
+
+        prompt = f"""Extract actionable tasks from this email. Return a JSON array of tasks.
+Each task should have:
+- title: Brief task title (max 100 chars)
+- description: Detailed description
+- due_date: ISO date string if mentioned, null otherwise
+- due_date_type: "explicit" (specific date), "relative" (e.g., "next week"), or null
+- original_text: The exact text that contains this task
+- confidence: 0.0-1.0 how confident you are this is a real task
+
+Only extract ACTIONABLE items that require the recipient to do something.
+
+Subject: {subject}
+
+Body:
+\"\"\"
+{body[:3000]}
+\"\"\"
+
+Return ONLY a valid JSON array, no other text. If no tasks found, return empty array []."""
+
+        try:
+            response = self.generate_text(prompt, max_tokens=1500)
+            if response:
+                result = self._parse_json_response(response)
+                if isinstance(result, list):
+                    return result
+        except Exception as e:
+            print(f"Groq task extraction error: {e}")
+        
+        return self._fallback_task_extraction(subject, body)
+
+    def infer_sender_authority(self, sender_name: str, sender_email: str, signature: str) -> Dict[str, Any]:
+        """Infer sender's authority level from email signature and context."""
+        if not self.is_available:
+            return {"authority_type": "unknown", "confidence": 0.5, "title": None}
+
+        prompt = f"""Analyze this email sender and determine their authority level.
+Return a JSON object with:
+- authority_type: One of "vip", "manager", "client", "recruiter", "colleague", "external", "unknown"
+- confidence: 0.0-1.0
+- title: Their job title if detectable, null otherwise
+- reasoning: Brief explanation
+
+Sender Name: {sender_name or 'Unknown'}
+Sender Email: {sender_email}
+Email Signature:
+\"\"\"
+{signature[:500] if signature else 'No signature'}
+\"\"\"
+
+Return ONLY valid JSON."""
+
+        try:
+            response = self.generate_text(prompt, max_tokens=500)
+            if response:
+                result = self._parse_json_response(response)
+                if result:
+                    return result
+        except Exception as e:
+            print(f"Groq authority inference error: {e}")
+        
+        return {"authority_type": "unknown", "confidence": 0.5, "title": None}
+
     def _parse_json_response(self, text: str) -> Optional[Any]:
         """Parse JSON from Groq response."""
         text = text.strip()
@@ -154,6 +253,81 @@ Provide a clear, helpful answer based on the emails above. Start your answer dir
                 except Exception:
                     pass
             return None
+
+    def _fallback_tone_analysis(self, text: str) -> Dict[str, Any]:
+        """Rule-based fallback for tone analysis."""
+        text_lower = text.lower()
+        
+        urgency = 0
+        stress = 0
+        anger = 0
+        excitement = 0
+        
+        urgent_words = ['urgent', 'asap', 'immediately', 'critical', 'emergency', 'deadline', 'today', 'now']
+        for word in urgent_words:
+            if word in text_lower:
+                urgency += 15
+        
+        stress_words = ['worried', 'concerned', 'issue', 'problem', 'stuck', 'help', 'struggling']
+        for word in stress_words:
+            if word in text_lower:
+                stress += 12
+        
+        anger_words = ['disappointed', 'unacceptable', 'frustrated', 'complaint', 'terrible', 'worst']
+        for word in anger_words:
+            if word in text_lower:
+                anger += 15
+        
+        excitement_words = ['excited', 'great', 'amazing', 'wonderful', 'thrilled', 'congratulations']
+        for word in excitement_words:
+            if word in text_lower:
+                excitement += 15
+        
+        if text.count('!') > 2:
+            urgency += 10
+            excitement += 10
+        if sum(1 for c in text if c.isupper()) / max(len(text), 1) > 0.3:
+            urgency += 15
+            anger += 10
+        
+        return {
+            "urgency": min(urgency, 100),
+            "stress": min(stress, 100),
+            "anger": min(anger, 100),
+            "excitement": min(excitement, 100),
+            "formality": 50,
+            "overall_intensity": min((urgency + stress + anger + excitement) // 4, 100)
+        }
+
+    def _fallback_task_extraction(self, subject: str, body: str) -> list:
+        """Rule-based fallback for task extraction."""
+        tasks = []
+        text = f"{subject} {body}".lower()
+        
+        task_patterns = [
+            "please review", "please send", "please update",
+            "please complete", "please prepare", "please schedule",
+            "can you", "could you", "would you", "need you to",
+            "i need", "action required", "todo:", "task:",
+        ]
+        
+        sentences = body.replace('\n', '. ').split('.')
+        
+        for sentence in sentences:
+            sentence_lower = sentence.lower().strip()
+            for pattern in task_patterns:
+                if pattern in sentence_lower and len(sentence.strip()) > 10:
+                    tasks.append({
+                        "title": sentence.strip()[:100],
+                        "description": sentence.strip(),
+                        "due_date": None,
+                        "due_date_type": None,
+                        "original_text": sentence.strip(),
+                        "confidence": 0.6
+                    })
+                    break
+        
+        return tasks[:5]
 
 
 # Global instance

@@ -52,11 +52,12 @@ Respond ONLY as JSON:
             result: parsed,
         });
 
-    } catch (err: any) {
-        console.log("Priority API Error:", err.message);
+    } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.log("Priority API Error:", message);
 
         return NextResponse.json(
-            { error: err.message },
+            { error: message },
             { status: 500 }
         );
     }

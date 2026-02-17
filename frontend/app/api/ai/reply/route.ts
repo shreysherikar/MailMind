@@ -38,9 +38,9 @@ Write a reply message:
         return NextResponse.json({
             reply: replyText,
         });
-    } catch (err: any) {
+    } catch (err) {
         return NextResponse.json(
-            { error: err.message },
+            { error: err instanceof Error ? err.message : "Unknown error" },
             { status: 500 }
         );
     }

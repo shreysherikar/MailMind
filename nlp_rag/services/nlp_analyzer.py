@@ -267,7 +267,7 @@ class NLPAnalyzer:
         subject: str,
         body: str
     ) -> EmailSummary:
-        """Parse summary result from AI (Grok or Gemini)."""
+        """Parse summary result from AI (Groq)."""
         # Parse entities
         entities = []
         for ent in result.get("entities", []):

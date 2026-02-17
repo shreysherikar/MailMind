@@ -8,9 +8,10 @@ Part of the AI-powered email assistant hackathon project.
 import sys
 from pathlib import Path
 
-# Add the project root to Python path for proper imports
-ROOT_DIR = Path(__file__).parent
+# Add the project root and priority_scoring to Python path for proper imports
+ROOT_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR / "priority_scoring"))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,7 +38,7 @@ This API provides core features for intelligent email management:
 Auto-prioritize emails based on:
 - **Sender Authority** (25 pts): VIP, manager, client detection
 - **Deadline Urgency** (25 pts): NLP-based deadline extraction
-- **Emotional Tone** (20 pts): Sentiment analysis via Gemini AI
+- **Emotional Tone** (20 pts): Sentiment analysis via Groq AI
 - **Historical Patterns** (15 pts): Response time/rate tracking
 - **Calendar Conflicts** (15 pts): Meeting/scheduling detection
 
@@ -91,7 +92,7 @@ async def startup_event():
     """Initialize database on startup."""
     init_db()
     print("✅ Database initialized")
-    print(f"🔑 Gemini API: {'Configured ✓' if settings.gemini_api_key else 'Not configured (using fallback)'}")
+    print(f"🔑 Groq API: {'Configured ✓' if settings.groq_api_key else 'Not configured (using fallback)'}")
     print(f"🌍 Environment: {settings.environment}")
 
 
@@ -137,7 +138,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "gemini_api": "configured" if settings.gemini_api_key else "not_configured",
+        "groq_api": "configured" if settings.groq_api_key else "not_configured",
         "database": "connected",
         "environment": settings.environment,
         "features": {

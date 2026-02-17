@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import Groq from "groq-sdk";
 
 export async function POST(req: Request) {
   const { text } = await req.json();
+
+  const safeText = (text || "").slice(0, 2000);
 
   const prompt = `
 Extract tasks and deadlines from this email.
@@ -18,30 +21,35 @@ Return JSON only in this format:
 }
 
 Email:
-${text}
+${safeText}
 `;
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  const data = await res.json();
-
-  let output = data.choices?.[0]?.message?.content;
-
   try {
-    output = JSON.parse(output);
-  } catch {
-    output = { tasks: [] };
-  }
+    const groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY!,
+    });
 
-  return NextResponse.json(output);
+    const chatCompletion = await groq.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    let output: unknown = chatCompletion.choices[0].message.content;
+
+    try {
+      output = JSON.parse(output as string);
+    } catch {
+      output = { tasks: [] };
+    }
+
+    return NextResponse.json(output);
+  } catch (error: unknown) {
+    console.error("TASK EXTRACT ERROR:", error);
+
+    if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 429) {
+      return NextResponse.json({ tasks: [] }, { status: 429 });
+    }
+
+    return NextResponse.json({ tasks: [] }, { status: 500 });
+  }
 }

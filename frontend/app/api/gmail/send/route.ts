@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || !(session as any).accessToken) {
+        if (!session || !session.accessToken) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
         const auth = new google.auth.OAuth2();
         auth.setCredentials({
-            access_token: (session as any).accessToken,
+            access_token: session.accessToken,
         });
 
         const gmail = google.gmail({ version: "v1", auth });
@@ -46,8 +46,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        console.log("Send Email Error:", err.message);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        console.log("Send Email Error:", err instanceof Error ? err.message : err);
+        return NextResponse.json({ error: err instanceof Error ? err.message : "Unknown error" }, { status: 500 });
     }
 }

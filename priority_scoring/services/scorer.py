@@ -5,28 +5,28 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from priority_scoring.models.schemas import (
+from models.schemas import (
     Email, PriorityScore, ScoreBreakdown, ScoreComponent,
     PriorityScoreBatchResponse
 )
 from shared.database import StoredEmailDB
 from shared.config import get_priority_level
-from shared.gemini_client import GeminiClient
-from priority_scoring.services.authority import AuthorityService
-from priority_scoring.services.deadline import DeadlineService
-from priority_scoring.services.tone import ToneService
-from priority_scoring.services.history import HistoryService
-from priority_scoring.services.calendar import CalendarService
+from .groq_client import GroqClient, get_groq_client
+from services.authority import AuthorityService
+from services.deadline import DeadlineService
+from services.tone import ToneService
+from services.history import HistoryService
+from services.calendar import CalendarService
 
 
 class PriorityScorerService:
     """Main service that orchestrates all scoring components."""
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
-        self.authority_service = AuthorityService(self.gemini)
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
+        self.authority_service = AuthorityService(self.groq)
         self.deadline_service = DeadlineService()
-        self.tone_service = ToneService(self.gemini)
+        self.tone_service = ToneService(self.groq)
         self.history_service = HistoryService()
         self.calendar_service = CalendarService()
 
@@ -43,32 +43,32 @@ class PriorityScorerService:
             authority_score = self.authority_service.calculate_score(email, db)
         except Exception as e:
             print(f"Authority service failed: {e}")
-            from priority_scoring.models.schemas import ScoreComponent
+            from models.schemas import ScoreComponent
             authority_score = ScoreComponent(score=50, confidence=0.0, reason="Service unavailable")
 
         try:
             deadline_score = self.deadline_service.calculate_score(email)
         except Exception:
-             from priority_scoring.models.schemas import ScoreComponent
+             from models.schemas import ScoreComponent
              deadline_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
 
         try:
             tone_score = self.tone_service.calculate_score(email)
         except Exception as e:
             print(f"Tone service failed: {e}")
-            from priority_scoring.models.schemas import ScoreComponent
+            from models.schemas import ScoreComponent
             tone_score = ScoreComponent(score=50, confidence=0.0, reason="Service unavailable")
             
         try:
             history_score = self.history_service.calculate_score(email, db)
         except Exception:
-             from priority_scoring.models.schemas import ScoreComponent
+             from models.schemas import ScoreComponent
              history_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
              
         try:
             calendar_score = self.calendar_service.calculate_score(email)
         except Exception:
-             from priority_scoring.models.schemas import ScoreComponent
+             from models.schemas import ScoreComponent
              calendar_score = ScoreComponent(score=0, confidence=0.0, reason="Service unavailable")
         
         # Build breakdown

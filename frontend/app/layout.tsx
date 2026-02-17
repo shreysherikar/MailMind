@@ -1,7 +1,10 @@
-"use client";
-
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
+import Providers from "./providers";
+
+export const metadata = {
+  title: "MailMind",
+  description: "Where email meets intelligence",
+};
 
 export default function RootLayout({
   children,
@@ -11,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[var(--bg)] text-[var(--text)]">
-        <SessionProvider>{children}</SessionProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
