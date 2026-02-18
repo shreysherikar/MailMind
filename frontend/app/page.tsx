@@ -94,7 +94,7 @@ export default function Home() {
   }, []);
 
   const [activeFolder, setActiveFolder] =
-    useState("inbox"); // inbox | starred | snoozed | done | drafts
+    useState("inbox"); // inbox | starred | snoozed | done | drafts | priority | deadline
 
 
 
@@ -1187,6 +1187,21 @@ export default function Home() {
     if (activeFolder === "drafts")
       return mail.label?.includes("DRAFT");
 
+    // Priority view - show all emails sorted by priority
+    if (activeFolder === "priority") {
+      // Will be sorted later, just don't filter out
+      return true;
+    }
+
+    // Deadline view - show emails with deadlines
+    if (activeFolder === "deadline") {
+      // Check if email has deadline-related keywords or AI priority reason mentions deadline
+      const hasDeadline = 
+        mail.subject?.toLowerCase().match(/deadline|due|urgent|asap|today|tomorrow|this week/i) ||
+        mail.snippet?.toLowerCase().match(/deadline|due|urgent|asap|today|tomorrow|this week/i) ||
+        aiPriorityMap[mail.id]?.reason?.toLowerCase().includes('deadline');
+      return hasDeadline;
+    }
 
     // Inbox normal view hides snoozed/done
     if (activeFolder === "inbox") {
@@ -1213,9 +1228,34 @@ export default function Home() {
     return getEmailCategory(mail) === activeTab;
   });
 
+  // Sort emails based on active folder
+  const sortedEmails = [...filteredEmails].sort((a, b) => {
+    if (activeFolder === "priority") {
+      // Sort by priority score (high to low)
+      const priorityOrder: Record<string, number> = {
+        'critical': 5,
+        'high': 4,
+        'medium': 3,
+        'low': 2,
+        'minimal': 1
+      };
+      const aPriority = aiPriorityMap[a.id]?.priority?.toLowerCase() || 'minimal';
+      const bPriority = aiPriorityMap[b.id]?.priority?.toLowerCase() || 'minimal';
+      return (priorityOrder[bPriority] || 0) - (priorityOrder[aPriority] || 0);
+    }
+    
+    if (activeFolder === "deadline") {
+      // Sort by date (most recent first for deadline urgency)
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+    
+    // Default: most recent first
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 
 
-  const burnout = getBurnoutStats(filteredEmails);
+
+  const burnout = getBurnoutStats(sortedEmails);
 
   if (session && showSplash) {
     return <SplashScreen />;
@@ -1595,6 +1635,59 @@ export default function Home() {
               </div>
             ))}
 
+            {/* ✅ SMART VIEWS SECTION */}
+            <hr style={{ margin: "16px 0", borderColor: "#E5E7EB" }} />
+            <div style={{ 
+              fontSize: 11, 
+              fontWeight: 700, 
+              color: "#9CA3AF", 
+              marginBottom: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px"
+            }}>
+              Smart Views
+            </div>
+            {[
+              { key: "priority", label: "🎯 By Priority", icon: "🎯" },
+              { key: "deadline", label: "⏰ By Deadline", icon: "⏰" },
+            ].map((item) => (
+              <div
+                key={item.key}
+                onClick={() => {
+                  setActiveFolder(item.key);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  background:
+                    activeFolder === item.key 
+                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      : "transparent",
+                  color: activeFolder === item.key ? "white" : "inherit",
+                  transition: "all 0.2s ease",
+                  boxShadow: activeFolder === item.key 
+                    ? "0 4px 12px rgba(102, 126, 234, 0.3)"
+                    : "none",
+                }}
+                onMouseOver={(e) => {
+                  if (activeFolder !== item.key) {
+                    e.currentTarget.style.background = "#F3F4F6";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (activeFolder !== item.key) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                {item.label}
+              </div>
+            ))}
+
             {/* ✅ PASTE CATEGORY SECTION EXACTLY HERE */}
             <hr style={{ margin: "16px 0", borderColor: "#E5E7EB" }} />
 
@@ -1668,10 +1761,31 @@ export default function Home() {
               background: "#F8FAFF",
             }}
           >
-
+            {/* Smart View Header */}
+            {(activeFolder === "priority" || activeFolder === "deadline") && (
+              <div style={{
+                padding: "16px 20px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                borderBottom: "1px solid rgba(255,255,255,0.2)",
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+              }}>
+                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+                  {activeFolder === "priority" ? "🎯 Priority View" : "⏰ Deadline View"}
+                </div>
+                <div style={{ fontSize: 13, opacity: 0.9 }}>
+                  {activeFolder === "priority" 
+                    ? `${sortedEmails.length} emails sorted by priority`
+                    : `${sortedEmails.length} emails with deadlines`
+                  }
+                </div>
+              </div>
+            )}
 
             {/* ✅ PREMIUM COMPACT EMAIL CARDS */}
-            {filteredEmails.map((mail, index) => {
+            {sortedEmails.map((mail, index) => {
               const score = getPriorityScore(mail);
               const category = getEmailCategory(mail);
 
