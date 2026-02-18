@@ -2,14 +2,21 @@
 
 import os
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+    
     # API Keys
-    gemini_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
     
     # Database
     database_url: str = "sqlite:///./email_priority.db"
@@ -30,11 +37,6 @@ class Settings(BaseSettings):
     threshold_high: int = 60
     threshold_medium: int = 40
     threshold_low: int = 20
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
 
 
 settings = Settings()

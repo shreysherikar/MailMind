@@ -44,11 +44,11 @@ ${safeSnippet}
     return NextResponse.json({
       summary: chatCompletion.choices[0].message.content,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("SUMMARY ERROR:", error);
 
-    // ✅ Handle Rate Limit
-    if (error?.status === 429) {
+    // Handle Rate Limit
+    if (error && typeof error === "object" && "status" in error && (error as { status: number }).status === 429) {
       return NextResponse.json(
         {
           summary:

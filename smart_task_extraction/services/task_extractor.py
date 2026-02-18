@@ -6,13 +6,14 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from models.schemas import (
-    Email, Task, TaskExtractResponse, SourceEmail, TaskStatus
+from smart_task_extraction.models.schemas import (
+    Task, TaskExtractResponse, SourceEmail, TaskStatus
 )
-from models.database import TaskDB
-from config import get_priority_level
-from .groq_client import GroqClient, get_groq_client
-from .deadline import DeadlineService
+from priority_scoring.models.schemas import Email
+from shared.database import TaskDB
+from shared.config import get_priority_level
+from shared.groq_client import GroqClient, get_groq_client
+from priority_scoring.services.deadline import DeadlineService
 
 
 class TaskExtractorService:
@@ -30,16 +31,13 @@ class TaskExtractorService:
     ) -> TaskExtractResponse:
         """Extract tasks from an email."""
         
-        # Get raw task data from Groq or fallback
         raw_tasks = self.groq.extract_tasks(email.subject, email.body)
         
-        # Convert to Task objects
         tasks = []
         for raw_task in raw_tasks:
             task = self._create_task(raw_task, email, email_priority_score)
             tasks.append(task)
             
-            # Save to database if available
             if db:
                 self._save_task_to_db(db, task)
         
@@ -119,7 +117,6 @@ class TaskExtractorService:
         if not db_task:
             return None
         
-        # Apply updates
         for key, value in updates.items():
             if hasattr(db_task, key) and value is not None:
                 setattr(db_task, key, value)
@@ -138,14 +135,12 @@ class TaskExtractorService:
         if not db_task:
             return {"error": "Task not found"}
         
-        # Mark as completed
         db_task.status = TaskStatus.COMPLETED.value
         db_task.completed_at = datetime.now(timezone.utc)
         db_task.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_task)
         
-        # Check if all tasks from this email are completed
         source_email_id = db_task.source_email_id
         incomplete_tasks = db.query(TaskDB).filter(
             TaskDB.source_email_id == source_email_id,
@@ -183,7 +178,6 @@ class TaskExtractorService:
     ) -> Task:
         """Create a Task object from raw extraction data."""
         
-        # Parse due date if present
         due_date = None
         due_date_type = raw_task.get("due_date_type")
         
@@ -194,13 +188,11 @@ class TaskExtractorService:
                 else:
                     due_date = raw_task["due_date"]
             except (ValueError, TypeError):
-                # Try extracting from original text
                 text = raw_task.get("original_text", "")
                 extracted = self.deadline_service.extract_due_date(text)
                 if extracted:
                     due_date, due_date_type = extracted
         
-        # Determine priority from email priority score
         priority_score = email_priority_score or 50
         priority_info = get_priority_level(priority_score)
         priority_label = priority_info["label"]
@@ -236,9 +228,9 @@ class TaskExtractorService:
             priority=task.priority,
             priority_score=task.priority_score,
             status=task.status.value,
-            source_email_id=task.source_email.id,
-            source_email_subject=task.source_email.subject,
-            source_email_sender=task.source_email.sender,
+            source_email_id=task.source_email.id if task.source_email else "",
+            source_email_subject=task.source_email.subject if task.source_email else "",
+            source_email_sender=task.source_email.sender if task.source_email else "",
             original_text=task.original_text,
             confidence=task.confidence,
             created_at=task.created_at

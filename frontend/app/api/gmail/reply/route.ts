@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         // ✅ OAuth Setup
         const auth = new google.auth.OAuth2();
         auth.setCredentials({
-            access_token: (session as any).accessToken,
+            access_token: session.accessToken,
         });
 
         const gmail = google.gmail({ version: "v1", auth });
@@ -86,11 +86,11 @@ export async function POST(req: Request) {
             success: true,
             sent,
         });
-    } catch (err: any) {
-        console.log("❌ Reply Error:", err.message);
+    } catch (err) {
+        console.log("Reply Error:", err instanceof Error ? err.message : err);
 
         return NextResponse.json(
-            { error: err.message },
+            { error: err instanceof Error ? err.message : "Unknown error" },
             { status: 500 }
         );
     }

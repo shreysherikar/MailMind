@@ -198,14 +198,14 @@ async def snooze_email(
 ):
     """Snooze an email for a number of hours."""
     from shared.database import StoredEmailDB
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     
     email = db.query(StoredEmailDB).filter(StoredEmailDB.id == email_id).first()
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
         
     email.status = "snoozed"
-    email.snoozed_until = datetime.utcnow() + timedelta(hours=hours)
+    email.snoozed_until = datetime.now(timezone.utc) + timedelta(hours=hours)
     db.commit()
     
     return {"message": f"Snoozed for {hours} hours"}
@@ -241,14 +241,14 @@ async def snooze_email(
 ):
     """Snooze an email for a number of hours."""
     from shared.database import StoredEmailDB
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
     
     email = db.query(StoredEmailDB).filter(StoredEmailDB.id == email_id).first()
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
         
     email.status = "snoozed"
-    email.snoozed_until = datetime.utcnow() + timedelta(hours=hours)
+    email.snoozed_until = datetime.now(timezone.utc) + timedelta(hours=hours)
     db.commit()
     
     return {"message": f"Snoozed for {hours} hours"}

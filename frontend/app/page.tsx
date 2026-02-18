@@ -5,8 +5,40 @@ import { signOut, useSession, signIn } from "next-auth/react";
 import SplashScreen from "@/components/SplashScreen";
 import Link from "next/link";
 
+interface Attachment {
+  filename: string;
+  mimeType: string;
+  attachmentId: string;
+}
+
+interface Email {
+  id: string;
+  threadId?: string;
+  messageId?: string;
+  subject: string;
+  from: string;
+  date: string;
+  snippet: string;
+  body?: string;
+  attachments?: Attachment[];
+  label?: string[];
+}
+
+interface Task {
+  text: string;
+  done: boolean;
+}
 
 
+
+
+const LOGIN_SLIDES = [
+  "/login/slide1.png",
+  "/login/slide2.png",
+  "/login/slide3.png",
+  "/login/slide4.png",
+  "/login/slide5.png",
+];
 
 export default function Home() {
   const { data: session } = useSession();
@@ -14,15 +46,15 @@ export default function Home() {
     console.log("SESSION:", session);
   }, [session]);
 
-  const [hoverFile, setHoverFile] = useState<any>(null);
+  const [hoverFile, setHoverFile] = useState<Attachment | null>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
   // 🕒 Current Date & Time
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
-  const [geminiQuestion, setGeminiQuestion] = useState("");
-  const [geminiReply, setGeminiReply] = useState("");
-  const [loadingGemini, setLoadingGemini] = useState(false);
+  const [groqQuestion, setGroqQuestion] = useState("");
+  const [groqReply, setGroqReply] = useState("");
+  const [loadingGroq, setLoadingGroq] = useState(false);
 
 
 
@@ -34,10 +66,10 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // 🔔 Store New Emails List
-  const [newMails, setNewMails] = useState<any[]>([]);
+  const [newMails, setNewMails] = useState<Email[]>([]);
   // ✅ Toolbar Feature States
   const [showCompose, setShowCompose] = useState(false);
-  const [showGemini, setShowGemini] = useState(false);
+  const [showGroq, setShowGroq] = useState(false);
 
 
 
@@ -48,57 +80,21 @@ export default function Home() {
   const [editableReply, setEditableReply] = useState("");
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
-  const [aiPriorityMap, setAiPriorityMap] = useState<any>({});
-  // ⭐ Starred Emails
+  const [aiPriorityMap, setAiPriorityMap] = useState<Record<string, { priority: string; reason: string }>>({});
   const [starredIds, setStarredIds] = useState<string[]>([]);
-  // ✅ Load Starred Emails from localStorage on startup
-  useEffect(() => {
-    const savedStarred = localStorage.getItem("starredIds");
-
-    if (savedStarred) {
-      setStarredIds(JSON.parse(savedStarred));
-    }
-  }, []);
-
-
-  // ⏳ Snoozed Emails (hidden temporarily)
   const [snoozedIds, setSnoozedIds] = useState<string[]>([]);
-  // ✅ Load Snoozed Emails from localStorage on startup
-  useEffect(() => {
-    const savedSnoozed = localStorage.getItem("snoozedIds");
-
-    if (savedSnoozed) {
-      setSnoozedIds(JSON.parse(savedSnoozed));
-    }
-  }, []);
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-
-  // ✅ Done Emails (removed)
   const [doneIds, setDoneIds] = useState<string[]>([]);
-  // ✅ Load Saved Folders on Startup
+
+  // Load saved folders from localStorage on startup
   useEffect(() => {
-    const savedStarred = JSON.parse(localStorage.getItem("starredIds") || "[]");
-    const savedSnoozed = JSON.parse(localStorage.getItem("snoozedIds") || "[]");
-    const savedDone = JSON.parse(localStorage.getItem("doneIds") || "[]");
-
-    setStarredIds(savedStarred);
-    setSnoozedIds(savedSnoozed);
-    setDoneIds(savedDone);
-  }, []);
-
-  // ✅ Load Done Emails from localStorage on startup
-  useEffect(() => {
-    const savedDone = localStorage.getItem("doneIds");
-
-    if (savedDone) {
-      setDoneIds(JSON.parse(savedDone));
-    }
+    setStarredIds(JSON.parse(localStorage.getItem("starredIds") || "[]"));
+    setSnoozedIds(JSON.parse(localStorage.getItem("snoozedIds") || "[]"));
+    setDoneIds(JSON.parse(localStorage.getItem("doneIds") || "[]"));
   }, []);
 
   const [activeFolder, setActiveFolder] =
-    useState("inbox"); // inbox | starred | snoozed | done | drafts
+    useState("inbox"); // inbox | starred | snoozed | done | drafts | priority | deadline
 
 
 
@@ -109,17 +105,17 @@ export default function Home() {
   const [aiReason, setAiReason] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
 
-  const [emails, setEmails] = useState<any[]>([]);
+  const [emails, setEmails] = useState<Email[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [selectedMail, setSelectedMail] = useState<any>(null);
+  const [selectedMail, setSelectedMail] = useState<Email | null>(null);
 
 
   const [summary, setSummary] = useState<string>("");
   const [summarizing, setSummarizing] = useState(false);
 
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   // ✅ FIX 1: Default tab to "All Mails"
   const [activeTab, setActiveTab] = useState("All Mails");
 
@@ -131,16 +127,7 @@ export default function Home() {
   const [urgency, setUrgency] = useState("Normal");
 
 
-  // ✅ Slides list (keep outside if)
-  const slides = [
-    "/login/slide1.png",
-    "/login/slide2.png",
-    "/login/slide3.png",
-    "/login/slide4.png",
-    "/login/slide5.png",
-  ];
 
-  // ✅ Slide state must be outside condition
   const [currentSlide, setCurrentSlide] = useState(0);
   // ⭐ Toggle Star
   function toggleStar() {
@@ -170,14 +157,14 @@ export default function Home() {
 
     setSelectedMail(null);
   }
-  async function askGemini() {
+  async function askGroq() {
     if (!selectedMail) {
       alert("Select an email first");
       return;
     }
 
-    setLoadingGemini(true);
-    setGeminiReply("");
+    setLoadingGroq(true);
+    setGroqReply("");
 
     const emailText =
       selectedMail.subject +
@@ -186,24 +173,24 @@ export default function Home() {
       "\n\n" +
       (selectedMail.body || "");
 
-    const res = await fetch("/api/gemini", {
+    const res = await fetch("/api/groq", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         emailText,
-        question: geminiQuestion || "Summarize this email clearly",
+        question: groqQuestion || "Summarize this email clearly",
       }),
     });
 
     const data = await res.json();
 
     if (data.reply) {
-      setGeminiReply(data.reply);
+      setGroqReply(data.reply);
     } else {
-      setGeminiReply("❌ Gemini failed: " + data.error);
+      setGroqReply("Groq failed: " + data.error);
     }
 
-    setLoadingGemini(false);
+    setLoadingGroq(false);
   }
 
 
@@ -241,10 +228,10 @@ export default function Home() {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => {
-        let next = Math.floor(Math.random() * slides.length);
+        let next = Math.floor(Math.random() * LOGIN_SLIDES.length);
 
         while (next === prev) {
-          next = Math.floor(Math.random() * slides.length);
+          next = Math.floor(Math.random() * LOGIN_SLIDES.length);
         }
 
         return next;
@@ -281,7 +268,7 @@ export default function Home() {
   };
 
   // ✅ FIXED: Combined function that fetches email AND generates AI
-  const openMailAndGenerateAI = async (id: string, mailPreview: any) => {
+  const openMailAndGenerateAI = async (id: string, mailPreview: Email) => {
     // Reset AI states
     setAiSummary("");
     setAiReason("");
@@ -364,7 +351,7 @@ export default function Home() {
     setLoadingReply(false);
   }
 
-  async function generateSummary(mail: any) {
+  async function generateSummary(mail: Email) {
     setLoadingAI(true);
     const emailContent = cleanEmailBody(mail.body || mail.snippet || "");
 
@@ -392,7 +379,7 @@ export default function Home() {
   }
 
   // ✅ NEW: AI Priority function for individual emails
-  async function generateAIPriorityForMail(mail: any) {
+  async function generateAIPriorityForMail(mail: Email) {
 
     // ✅ Already generated → skip
     if (aiPriorityMap[mail.id]) return;
@@ -409,7 +396,7 @@ export default function Home() {
     const data = await res.json();
 
     if (data.result?.score) {
-      setAiPriorityMap((prev: any) => ({
+      setAiPriorityMap((prev) => ({
         ...prev,
         [mail.id]: data.result,
       }));
@@ -417,7 +404,7 @@ export default function Home() {
   }
 
 
-  async function generateExplanation(mail: any) {
+  async function generateExplanation(mail: Email) {
     setLoadingAI(true);
     const res = await fetch("/api/ai/explain", {
       method: "POST",
@@ -581,40 +568,19 @@ export default function Home() {
         // 🔔 Notification Logic (New mails since last open)
         const lastSeen = localStorage.getItem("lastSeenTime");
 
-        let count = 0;
+          let freshMails: Email[] = [];
 
-        if (lastSeen) {
-          const lastTime = new Date(lastSeen).getTime();
+          if (lastSeen) {
+            const lastTime = new Date(lastSeen).getTime();
 
-          count = (data.emails || []).filter((mail: any) => {
-            const mailTime = new Date(mail.date).getTime();
-            return mailTime > lastTime;
-          }).length;
-        }
+            freshMails = (data.emails || []).filter((mail: Email) => {
+              const mailTime = new Date(mail.date).getTime();
+              return mailTime > lastTime;
+            });
+          }
 
-        // Set notification count
-        setNewMailCount(count);
-
-        // Update last seen time to NOW
-        // 🔔 Notification Logic (New mails since last click)
-
-        let freshMails: any[] = [];
-
-        if (lastSeen) {
-          const lastTime = new Date(lastSeen).getTime();
-
-          freshMails = (data.emails || []).filter((mail: any) => {
-            const mailTime = new Date(mail.date).getTime();
-            return mailTime > lastTime;
-          });
-        } else {
-          // First time user opens app
-          freshMails = [];
-        }
-
-        // Save new mails + count
-        setNewMails(freshMails);
-        setNewMailCount(freshMails.length);
+          setNewMails(freshMails);
+          setNewMailCount(freshMails.length);
 
 
       } catch (error) {
@@ -636,7 +602,7 @@ export default function Home() {
     await loadEmails(); // fetch fresh inbox
   };
 
-  function getEmailCategory(mail: any) {
+  function getEmailCategory(mail: Email) {
     const subject = (mail.subject || "").toLowerCase();
     const snippet = (mail.snippet || "").toLowerCase();
 
@@ -975,52 +941,33 @@ export default function Home() {
                 MailMind
               </h2>
             </div>
-            {/* 🕒 Center Date & Time */}
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-                padding: "8px 18px",
-                borderRadius: 14,
-                background: "rgba(255,255,255,0.12)",
-                backdropFilter: "blur(10px)",
-                color: "rgba(255,255,255,0.9)",
-                fontSize: 14,
-                fontWeight: 600,
-              }}
-            >
-
-              {/* 🕒 Center Date & Time */}
-              {mounted && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    padding: "8px 18px",
-                    borderRadius: 14,
-                    background: "rgba(255,255,255,0.12)",
-                    backdropFilter: "blur(10px)",
-                    color: "rgba(255,255,255,0.9)",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    letterSpacing: "0.5px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {currentTime.toLocaleString("en-IN", {
-                    weekday: "short",
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              )}
-
-
-            </div>
+            {/* Date & Time */}
+            {mounted && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  padding: "8px 18px",
+                  borderRadius: 14,
+                  background: "rgba(255,255,255,0.12)",
+                  backdropFilter: "blur(10px)",
+                  color: "rgba(255,255,255,0.9)",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  letterSpacing: "0.5px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {currentTime.toLocaleString("en-IN", {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+            )}
 
 
             {/* ✅ Right: Features Button */}
@@ -1190,7 +1137,7 @@ export default function Home() {
         >
           <img
             key={currentSlide}
-            src={slides[currentSlide]}
+            src={LOGIN_SLIDES[currentSlide]}
             alt="slide"
             style={{
               width: "100%",
@@ -1240,6 +1187,21 @@ export default function Home() {
     if (activeFolder === "drafts")
       return mail.label?.includes("DRAFT");
 
+    // Priority view - show all emails sorted by priority
+    if (activeFolder === "priority") {
+      // Will be sorted later, just don't filter out
+      return true;
+    }
+
+    // Deadline view - show emails with deadlines
+    if (activeFolder === "deadline") {
+      // Check if email has deadline-related keywords or AI priority reason mentions deadline
+      const hasDeadline = 
+        mail.subject?.toLowerCase().match(/deadline|due|urgent|asap|today|tomorrow|this week/i) ||
+        mail.snippet?.toLowerCase().match(/deadline|due|urgent|asap|today|tomorrow|this week/i) ||
+        aiPriorityMap[mail.id]?.reason?.toLowerCase().includes('deadline');
+      return hasDeadline;
+    }
 
     // Inbox normal view hides snoozed/done
     if (activeFolder === "inbox") {
@@ -1266,9 +1228,34 @@ export default function Home() {
     return getEmailCategory(mail) === activeTab;
   });
 
+  // Sort emails based on active folder
+  const sortedEmails = [...filteredEmails].sort((a, b) => {
+    if (activeFolder === "priority") {
+      // Sort by priority score (high to low)
+      const priorityOrder: Record<string, number> = {
+        'critical': 5,
+        'high': 4,
+        'medium': 3,
+        'low': 2,
+        'minimal': 1
+      };
+      const aPriority = aiPriorityMap[a.id]?.priority?.toLowerCase() || 'minimal';
+      const bPriority = aiPriorityMap[b.id]?.priority?.toLowerCase() || 'minimal';
+      return (priorityOrder[bPriority] || 0) - (priorityOrder[aPriority] || 0);
+    }
+    
+    if (activeFolder === "deadline") {
+      // Sort by date (most recent first for deadline urgency)
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }
+    
+    // Default: most recent first
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 
 
-  const burnout = getBurnoutStats(filteredEmails);
+
+  const burnout = getBurnoutStats(sortedEmails);
 
   if (session && showSplash) {
     return <SplashScreen />;
@@ -1648,6 +1635,54 @@ export default function Home() {
               </div>
             ))}
 
+            {/* ✅ SMART VIEWS SECTION */}
+            <hr style={{ margin: "16px 0", borderColor: "#E5E7EB" }} />
+            <div style={{ 
+              fontSize: 11, 
+              fontWeight: 700, 
+              color: "#9CA3AF", 
+              marginBottom: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px"
+            }}>
+              Smart Views
+            </div>
+            {[
+              { key: "priority", label: "By Priority", icon: "🎯" },
+              { key: "deadline", label: "By Deadline", icon: "⏰" },
+            ].map((item) => (
+              <div
+                key={item.key}
+                onClick={() => {
+                  setActiveFolder(item.key);
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  marginBottom: 8,
+                  background:
+                    activeFolder === item.key ? "#DBEAFE" : "transparent",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseOver={(e) => {
+                  if (activeFolder !== item.key) {
+                    e.currentTarget.style.background = "#F3F4F6";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (activeFolder !== item.key) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <span style={{ marginRight: 8 }}>{item.icon}</span>
+                {item.label}
+              </div>
+            ))}
+
             {/* ✅ PASTE CATEGORY SECTION EXACTLY HERE */}
             <hr style={{ margin: "16px 0", borderColor: "#E5E7EB" }} />
 
@@ -1721,10 +1756,36 @@ export default function Home() {
               background: "#F8FAFF",
             }}
           >
-
+            {/* Smart View Header */}
+            {(activeFolder === "priority" || activeFolder === "deadline") && (
+              <div style={{
+                padding: "16px 20px",
+                background: "white",
+                borderBottom: "1px solid #E5E7EB",
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+              }}>
+                <div style={{ 
+                  fontSize: 14, 
+                  fontWeight: 600, 
+                  color: "#111827",
+                  marginBottom: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}>
+                  <span>{activeFolder === "priority" ? "🎯" : "⏰"}</span>
+                  {activeFolder === "priority" ? "By Priority" : "By Deadline"}
+                </div>
+                <div style={{ fontSize: 12, color: "#6B7280" }}>
+                  {sortedEmails.length} {sortedEmails.length === 1 ? 'email' : 'emails'}
+                </div>
+              </div>
+            )}
 
             {/* ✅ PREMIUM COMPACT EMAIL CARDS */}
-            {filteredEmails.map((mail, index) => {
+            {sortedEmails.map((mail, index) => {
               const score = getPriorityScore(mail);
               const category = getEmailCategory(mail);
 
@@ -1824,6 +1885,56 @@ export default function Home() {
                         <span style={{ fontSize: 11, color: "#9CA3AF" }}>
                           {mail.date}
                         </span>
+
+                        {/* Priority Badge (only in priority view) */}
+                        {activeFolder === "priority" && aiPriorityMap[mail.id]?.priority && (
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              background: 
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#FEE2E2' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#FED7AA' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#FEF3C7' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#D1FAE5' :
+                                '#F3F4F6',
+                              color:
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#991B1B' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#9A3412' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#92400E' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#065F46' :
+                                '#6B7280',
+                              border: '1px solid',
+                              borderColor:
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#FCA5A5' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#FDBA74' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#FDE68A' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#6EE7B7' :
+                                '#E5E7EB',
+                            }}
+                          >
+                            {aiPriorityMap[mail.id].priority.toUpperCase()}
+                          </span>
+                        )}
+
+                        {/* Deadline Badge (only in deadline view) */}
+                        {activeFolder === "deadline" && (
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              background: "#FEF3C7",
+                              color: "#92400E",
+                              border: '1px solid #FDE68A',
+                            }}
+                          >
+                            ⏰ DEADLINE
+                          </span>
+                        )}
 
                         {/* First Time Sender Badge */}
                         {isFirstTimeSender(mail, emails) && (
@@ -2024,10 +2135,10 @@ export default function Home() {
                       🗑️
                     </button>
 
-                    {/* 💎 Gemini */}
+                    {/* 💎 Groq AI */}
                     <button
-                      onClick={() => setShowGemini(true)}
-                      title="Ask Gemini"
+                      onClick={() => setShowGroq(true)}
+                      title="Ask Groq"
                       style={{
                         padding: "6px 10px",
                         fontSize: 14,
@@ -2037,7 +2148,7 @@ export default function Home() {
                         background: "#DBEAFE",
                       }}
                     >
-                      💎 Ask Gemini
+                      💎 Ask Groq
                     </button>
                   </div>
                 </div>
@@ -2504,7 +2615,7 @@ export default function Home() {
                 </div>
 
                 {/* 📎 Attachments Section */}
-                {selectedMail?.attachments?.length > 0 && (
+                {(selectedMail?.attachments?.length ?? 0) > 0 && (
                   <div
                     style={{
                       marginTop: 20,
@@ -2518,7 +2629,7 @@ export default function Home() {
                       📎 Attachments
                     </h3>
 
-                    {selectedMail.attachments.map((file: any) => (
+                    {selectedMail.attachments?.map((file: any) => (
                       <div
                         key={file.attachmentId}
                         style={{
@@ -2768,8 +2879,8 @@ export default function Home() {
           </div>
         </div>
       )}
-      {/* ✅ GEMINI MODAL POPUP */}
-      {showGemini && (
+      {/* ✅ GROQ AI MODAL POPUP */}
+      {showGroq && (
         <div
           style={{
             position: "fixed",
@@ -2794,15 +2905,15 @@ export default function Home() {
             }}
           >
             <h2 style={{ fontWeight: 800, fontSize: 18 }}>
-              💎 Ask Gemini
+              💎 Ask Groq AI
             </h2>
 
             {/* Question Input */}
             <textarea
               rows={4}
-              value={geminiQuestion}
-              onChange={(e) => setGeminiQuestion(e.target.value)}
-              placeholder="Ask Gemini about this email..."
+              value={groqQuestion}
+              onChange={(e) => setGroqQuestion(e.target.value)}
+              placeholder="Ask Groq about this email..."
               style={{
                 width: "100%",
                 padding: 12,
@@ -2814,7 +2925,7 @@ export default function Home() {
 
             {/* Ask Button */}
             <button
-              onClick={askGemini}
+              onClick={askGroq}
               style={{
                 marginTop: 14,
                 width: "100%",
@@ -2827,11 +2938,11 @@ export default function Home() {
                 cursor: "pointer",
               }}
             >
-              {loadingGemini ? "Thinking..." : "Ask Gemini 💎"}
+              {loadingGroq ? "Thinking..." : "Ask Groq 💎"}
             </button>
 
             {/* Reply Output */}
-            {geminiReply && (
+            {groqReply && (
               <div
                 style={{
                   marginTop: 14,
@@ -2843,16 +2954,16 @@ export default function Home() {
                   border: "1px solid #E5E7EB",
                 }}
               >
-                {geminiReply}
+                {groqReply}
               </div>
             )}
 
             {/* Close */}
             <button
               onClick={() => {
-                setShowGemini(false);
-                setGeminiQuestion("");
-                setGeminiReply("");
+                setShowGroq(false);
+                setGroqQuestion("");
+                setGroqReply("");
               }}
               style={{
                 marginTop: 14,

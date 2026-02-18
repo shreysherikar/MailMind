@@ -1,6 +1,6 @@
 """Follow-up detection service for analyzing sent emails."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import uuid
 import json
@@ -17,7 +17,7 @@ from followup_management.models.schemas import (
 )
 from priority_scoring.models.schemas import Email
 from shared.database import FollowUpDB
-from shared.gemini_client import GeminiClient
+from shared.groq_client import GroqClient, get_groq_client
 
 
 class FollowUpDetectorService:
@@ -26,8 +26,8 @@ class FollowUpDetectorService:
     # Default days before marking as overdue
     DEFAULT_OVERDUE_DAYS = 3
 
-    def __init__(self, gemini_client: Optional[GeminiClient] = None):
-        self.gemini = gemini_client or GeminiClient()
+    def __init__(self, groq_client: Optional[GroqClient] = None):
+        self.groq = groq_client or get_groq_client()
 
     def detect_followup(
         self,
@@ -165,7 +165,7 @@ class FollowUpDetectorService:
                 else:
                     setattr(db_followup, key, value)
         
-        db_followup.updated_at = datetime.utcnow()
+        db_followup.updated_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(db_followup)
         
@@ -182,7 +182,7 @@ class FollowUpDetectorService:
         
         return self.update_followup(db, followup_id, {
             "status": FollowUpStatus.REPLIED,
-            "replied_at": datetime.utcnow(),
+            "replied_at": datetime.now(timezone.utc),
             "reply_email_id": reply_email_id,
             "reply_subject": reply_subject
         })
@@ -236,13 +236,13 @@ class FollowUpDetectorService:
     def _analyze_followup_intent(self, email: Email) -> FollowUpIntent:
         """Use AI to analyze if email expects a reply."""
         
-        if self.gemini.is_available:
+        if self.groq.is_available:
             return self._ai_analyze_intent(email)
         else:
             return self._fallback_analyze_intent(email)
 
     def _ai_analyze_intent(self, email: Email) -> FollowUpIntent:
-        """AI-powered intent analysis using Gemini."""
+        """AI-powered intent analysis using Groq."""
         
         prompt = f"""Analyze this sent email and determine if it expects a reply from the recipient.
 
@@ -265,8 +265,9 @@ Body:
 Return ONLY valid JSON, no other text."""
 
         try:
-            response = self.gemini.model.generate_content(prompt)
-            result = self.gemini._parse_json_response(response.text)
+            response = self.groq.generate_text(prompt, max_tokens=500)
+            if response:
+                result = self.groq._parse_json_response(response)
             
             if result:
                 return FollowUpIntent(
@@ -279,7 +280,7 @@ Return ONLY valid JSON, no other text."""
                     action_items_assigned=result.get("action_items_assigned", 0)
                 )
         except Exception as e:
-            print(f"Gemini follow-up analysis error: {e}")
+            print(f"Groq follow-up analysis error: {e}")
         
         return self._fallback_analyze_intent(email)
 
@@ -399,7 +400,7 @@ Return ONLY valid JSON, no other text."""
             snippet += "..."
         
         # Calculate expected reply date
-        expected_reply_by = datetime.utcnow() + timedelta(days=intent.suggested_followup_days)
+        expected_reply_by = datetime.now(timezone.utc) + timedelta(days=intent.suggested_followup_days)
         
         return FollowUp(
             id=str(uuid.uuid4()),
@@ -416,8 +417,8 @@ Return ONLY valid JSON, no other text."""
             confidence=intent.confidence,
             detection_reasons=intent.reasons,
             thread_id=thread_id,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
 
     def _update_waiting_status(self, db: Session):
@@ -427,7 +428,7 @@ Return ONLY valid JSON, no other text."""
             FollowUpDB.status == FollowUpStatus.WAITING.value
         ).all()
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         for followup in waiting_followups:
             days_waiting = (now - followup.sent_at).days

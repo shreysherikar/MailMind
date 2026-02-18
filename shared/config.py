@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 # Find the root directory (where .env should be)
@@ -35,10 +35,11 @@ class Settings(BaseSettings):
     threshold_medium: int = 40
     threshold_low: int = 20
     
-    class Config:
-        env_file = str(ROOT_DIR / ".env")
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=str(ROOT_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 
 settings = Settings()

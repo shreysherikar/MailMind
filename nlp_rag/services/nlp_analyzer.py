@@ -1,7 +1,7 @@
 """Advanced NLP analysis service."""
 
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 
 from nlp_rag.models.schemas import (
@@ -69,7 +69,7 @@ class NLPAnalyzer:
             entities=entities,
             readability_score=readability,
             word_count=word_count,
-            analyzed_at=datetime.utcnow()
+            analyzed_at=datetime.now(timezone.utc)
         )
     
     def summarize_email(
@@ -267,7 +267,7 @@ class NLPAnalyzer:
         subject: str,
         body: str
     ) -> EmailSummary:
-        """Parse summary result from AI (Grok or Gemini)."""
+        """Parse summary result from AI (Groq)."""
         # Parse entities
         entities = []
         for ent in result.get("entities", []):

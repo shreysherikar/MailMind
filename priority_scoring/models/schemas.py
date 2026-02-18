@@ -1,9 +1,9 @@
 """Pydantic schemas for request/response validation."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 import uuid
 
 
@@ -27,13 +27,12 @@ class Email(BaseModel):
     sender_name: Optional[str] = Field(None, description="Sender's display name")
     subject: str = Field(..., description="Email subject line")
     body: str = Field(..., description="Email body content (plain text or HTML)")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     recipients: Optional[List[str]] = Field(default=[], description="List of recipient emails")
     cc: Optional[List[str]] = Field(default=[], description="CC recipients")
     has_attachments: bool = Field(default=False)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EmailScoreRequest(BaseModel):
@@ -74,10 +73,9 @@ class PriorityScore(BaseModel):
     badge: str = Field(..., description="Emoji badge")
     breakdown: ScoreBreakdown
     confidence: float = Field(..., ge=0.0, le=1.0, description="Overall confidence")
-    scored_at: datetime = Field(default_factory=datetime.utcnow)
+    scored_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PriorityScoreBatchResponse(BaseModel):
@@ -117,11 +115,10 @@ class Task(BaseModel):
     source_email: SourceEmail
     original_text: str = Field(..., description="Original text that triggered task extraction")
     confidence: float = Field(default=0.8, ge=0.0, le=1.0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskCreate(BaseModel):
@@ -177,10 +174,9 @@ class Contact(BaseModel):
     domain: Optional[str] = Field(None, description="Email domain")
     custom_priority_boost: int = Field(default=0, ge=-25, le=25)
     notes: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContactCreate(BaseModel):
@@ -211,5 +207,4 @@ class ResponseHistory(BaseModel):
     total_responses: int
     last_interaction: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

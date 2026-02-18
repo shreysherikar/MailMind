@@ -1,0 +1,2 @@
+dateparser>=1.0.0
+faiss-cpu>=1.13.0  # Vector database for semantic search (Python 3.14 compatible)

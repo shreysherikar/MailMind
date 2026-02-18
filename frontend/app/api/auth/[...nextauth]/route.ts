@@ -45,9 +45,9 @@ export const authOptions: NextAuthOptions = {
 
     // ✅ Send token to frontend session
     async session({ session, token }) {
-      (session as any).accessToken = token.accessToken;
-      (session as any).refreshToken = token.refreshToken;
-      (session as any).provider = token.provider;
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
+        session.provider = token.provider as string;
 
       return session;
     },
