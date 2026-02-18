@@ -1648,8 +1648,8 @@ export default function Home() {
               Smart Views
             </div>
             {[
-              { key: "priority", label: "🎯 By Priority", icon: "🎯" },
-              { key: "deadline", label: "⏰ By Deadline", icon: "⏰" },
+              { key: "priority", label: "By Priority", icon: "🎯" },
+              { key: "deadline", label: "By Deadline", icon: "⏰" },
             ].map((item) => (
               <div
                 key={item.key}
@@ -1664,14 +1664,8 @@ export default function Home() {
                   fontWeight: 600,
                   marginBottom: 8,
                   background:
-                    activeFolder === item.key 
-                      ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                      : "transparent",
-                  color: activeFolder === item.key ? "white" : "inherit",
+                    activeFolder === item.key ? "#DBEAFE" : "transparent",
                   transition: "all 0.2s ease",
-                  boxShadow: activeFolder === item.key 
-                    ? "0 4px 12px rgba(102, 126, 234, 0.3)"
-                    : "none",
                 }}
                 onMouseOver={(e) => {
                   if (activeFolder !== item.key) {
@@ -1684,6 +1678,7 @@ export default function Home() {
                   }
                 }}
               >
+                <span style={{ marginRight: 8 }}>{item.icon}</span>
                 {item.label}
               </div>
             ))}
@@ -1765,21 +1760,26 @@ export default function Home() {
             {(activeFolder === "priority" || activeFolder === "deadline") && (
               <div style={{
                 padding: "16px 20px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                borderBottom: "1px solid rgba(255,255,255,0.2)",
+                background: "white",
+                borderBottom: "1px solid #E5E7EB",
                 position: "sticky",
                 top: 0,
                 zIndex: 10,
               }}>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
-                  {activeFolder === "priority" ? "🎯 Priority View" : "⏰ Deadline View"}
+                <div style={{ 
+                  fontSize: 14, 
+                  fontWeight: 600, 
+                  color: "#111827",
+                  marginBottom: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                }}>
+                  <span>{activeFolder === "priority" ? "🎯" : "⏰"}</span>
+                  {activeFolder === "priority" ? "By Priority" : "By Deadline"}
                 </div>
-                <div style={{ fontSize: 13, opacity: 0.9 }}>
-                  {activeFolder === "priority" 
-                    ? `${sortedEmails.length} emails sorted by priority`
-                    : `${sortedEmails.length} emails with deadlines`
-                  }
+                <div style={{ fontSize: 12, color: "#6B7280" }}>
+                  {sortedEmails.length} {sortedEmails.length === 1 ? 'email' : 'emails'}
                 </div>
               </div>
             )}
@@ -1885,6 +1885,56 @@ export default function Home() {
                         <span style={{ fontSize: 11, color: "#9CA3AF" }}>
                           {mail.date}
                         </span>
+
+                        {/* Priority Badge (only in priority view) */}
+                        {activeFolder === "priority" && aiPriorityMap[mail.id]?.priority && (
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              background: 
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#FEE2E2' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#FED7AA' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#FEF3C7' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#D1FAE5' :
+                                '#F3F4F6',
+                              color:
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#991B1B' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#9A3412' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#92400E' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#065F46' :
+                                '#6B7280',
+                              border: '1px solid',
+                              borderColor:
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'critical' ? '#FCA5A5' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'high' ? '#FDBA74' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'medium' ? '#FDE68A' :
+                                aiPriorityMap[mail.id].priority.toLowerCase() === 'low' ? '#6EE7B7' :
+                                '#E5E7EB',
+                            }}
+                          >
+                            {aiPriorityMap[mail.id].priority.toUpperCase()}
+                          </span>
+                        )}
+
+                        {/* Deadline Badge (only in deadline view) */}
+                        {activeFolder === "deadline" && (
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: 6,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              background: "#FEF3C7",
+                              color: "#92400E",
+                              border: '1px solid #FDE68A',
+                            }}
+                          >
+                            ⏰ DEADLINE
+                          </span>
+                        )}
 
                         {/* First Time Sender Badge */}
                         {isFirstTimeSender(mail, emails) && (
